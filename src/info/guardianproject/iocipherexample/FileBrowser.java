@@ -1,6 +1,8 @@
 package info.guardianproject.iocipherexample;
 
-import java.io.File;
+import info.guardianproject.iocipher.File;
+import info.guardianproject.iocipher.VirtualFileSystem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,9 @@ public class FileBrowser extends ListActivity {
 	private List<String> path = null;
 	private TextView fileInfo;
 	private String[] items;
+	private String dbFile;
 	private String root = "/";
+	private VirtualFileSystem vfs;
 
 	/** Called when the activity is first created. */
 
@@ -31,7 +35,20 @@ public class FileBrowser extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		fileInfo = (TextView) findViewById(R.id.info);
+		dbFile = getDir("vfs", MODE_PRIVATE).getAbsolutePath() + "/myfiles.db";
+	}
+
+	protected void onResume() {
+		super.onResume();
+		vfs = new VirtualFileSystem(dbFile);
+		// TODO don't use a hard-coded password! prompt for the password
+		vfs.mount("my fake password");
 		getFileList(root);
+	}
+
+	protected void onDestroy() {
+		super.onDestroy();
+		vfs.unmount();
 	}
 
 	// To make listview for the list of file
