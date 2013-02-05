@@ -1,15 +1,24 @@
 package info.guardianproject.iocipherexample;
 
 import info.guardianproject.iocipher.File;
+import info.guardianproject.iocipher.FileOutputStream;
 import info.guardianproject.iocipher.VirtualFileSystem;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +28,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class FileBrowser extends ListActivity {
+	private final static String TAG = "FileBrowser";
 
 	private List<String> item = null;
 	private List<String> path = null;
@@ -33,6 +43,20 @@ public class FileBrowser extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		Intent intent = getIntent();
+		String action = intent.getAction();
+		String type = intent.getType();
+		if (Intent.ACTION_SEND.equals(action) && type != null) {
+			if (intent.hasExtra(Intent.EXTRA_STREAM)) {
+				Log.i(TAG, "save extra stream URI");
+				handleSendUri((Uri) intent.getExtras().get(Intent.EXTRA_STREAM));
+			} else {
+				Log.i(TAG, "save data");
+				handleSendUri(intent.getData());
+			}
+		}
+
 		setContentView(R.layout.main);
 		fileInfo = (TextView) findViewById(R.id.info);
 		dbFile = getDir("vfs", MODE_PRIVATE).getAbsolutePath() + "/myfiles.db";
@@ -49,6 +73,38 @@ public class FileBrowser extends ListActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		vfs.unmount();
+	}
+
+	private void handleSendUri(Uri dataUri) {
+		try {
+			ContentResolver cr = getContentResolver();
+			InputStream in = cr.openInputStream(dataUri);
+			Log.i(TAG, "incoming URI: " + dataUri.toString());
+			String fileName = dataUri.getLastPathSegment();
+			File f = new File("/" + fileName);
+			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(f));
+			readBytesAndClose(in, out);
+			Log.v(TAG, f.getAbsolutePath() + " size: " + String.valueOf(f.length()));
+		} catch (Exception e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
+	}
+
+	private void readBytesAndClose(InputStream in, OutputStream out)
+			throws IOException {
+		try {
+			int block = 8 * 1024; // IOCipher works best with 8k blocks
+			byte[] buff = new byte[block];
+			while (true) {
+				int len = in.read(buff, 0, block);
+				if (len < 0) {
+					break;
+				}
+				out.write(buff, 0, len);
+			}
+		} finally {
+			in.close();
+		}
 	}
 
 	// To make listview for the list of file
