@@ -13,6 +13,7 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,6 +23,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -168,17 +170,41 @@ public class FileBrowser extends ListActivity {
 
 			}
 		} else {
+			Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
+			final Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
 			new AlertDialog.Builder(this)
 					.setIcon(R.drawable.icon)
 					.setTitle("[" + file.getName() + "]")
-					.setPositiveButton("OK",
+					.setNeutralButton("View",
+							new DialogInterface.OnClickListener() {
+						// @Override
+						public void onClick(DialogInterface dialog,
+								int which) {
+							try {
+								startActivity(new Intent(Intent.ACTION_VIEW, uri));
+							} catch (ActivityNotFoundException e) {
+								Log.e(TAG, "No relevant Activity found", e);
+							}
+						}
+					})
+					.setPositiveButton("Share...",
 							new DialogInterface.OnClickListener() {
 
 								// @Override
 								public void onClick(DialogInterface dialog,
 										int which) {
-									// TODO Auto-generated method stub
-
+									Intent intent = new Intent(Intent.ACTION_SEND, uri);
+									String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+									String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
+									if (mimeType == null)
+										mimeType = "application/octet-stream";
+									Log.i(TAG, "mime type: "+ mimeType);
+									intent.setType(mimeType);
+									try {
+										startActivity(Intent.createChooser(intent, "Share this!"));
+									} catch (ActivityNotFoundException e) {
+										Log.e(TAG, "No relevant Activity found", e);
+									}
 								}
 							}).show();
 		}
