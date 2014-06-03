@@ -6,6 +6,7 @@ import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,32 +36,43 @@ public class IOCipherContentProvider extends ContentProvider {
 	@Override
 	public String getType(Uri uri) {
 		String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-		return mimeTypeMap.getMimeTypeFromExtension(fileExtension);
+		String type = mimeTypeMap.getMimeTypeFromExtension(fileExtension);
+		return type;
 	}
 
 	@Override
 	public ParcelFileDescriptor openFile(Uri uri, String mode)
 			throws FileNotFoundException {
 		ParcelFileDescriptor[] pipe = null;
-		BufferedInputStream in = null;
+		InputStream in = null;
 
+		String path = uri.getPath();
+		
 		try {
-			pipe = ParcelFileDescriptor.createPipe();
-			in = new BufferedInputStream(new FileInputStream(new File("/test.pdf")));
+			File fileShare = new File(path);
+			Log.d(TAG,"found file: " + fileShare.getAbsolutePath() + " size=" + fileShare.length());
+			pipe = ParcelFileDescriptor.createPipe();			
+			in = new FileInputStream(fileShare);
 			new PipeFeederThread(in,
-					new AutoCloseOutputStream(pipe[1])).start();
+					new AutoCloseOutputStream(pipe[1])
+				{
+				
+				}		
+					).start();
 		} catch (IOException e) {
 			Log.e(TAG, "Error opening pipe", e);
 			throw new FileNotFoundException("Could not open pipe for: "
 					+ uri.toString());
-		}
-
+		}		
 		return (pipe[0]);
 	}
 
 	@Override
 	public Cursor query(Uri url, String[] projection, String selection,
 			String[] selectionArgs, String sort) {
+		
+		Log.d(TAG,"query called: " + url.toString());
+		
 		throw new RuntimeException("Operation not supported");
 	}
 
@@ -82,26 +94,29 @@ public class IOCipherContentProvider extends ContentProvider {
 
 	static class PipeFeederThread extends Thread {
 		InputStream in;
-		OutputStream out;
+		BufferedOutputStream out;
 
 		PipeFeederThread(InputStream in, OutputStream out) {
 			this.in = in;
-			this.out = out;
+			this.out = new BufferedOutputStream(out, 64000);	
+			setDaemon(true);
 		}
 
 		@Override
 		public void run() {
-			byte[] buf = new byte[8192];
+			
+			byte[] buf = new byte[4096];
 			int len;
 
 			try {
-				while ((len = in.read(buf)) > 0) {
+				
+				while ((len = in.read(buf)) != -1)
 					out.write(buf, 0, len);
-				}
-
+				
 				in.close();
 				out.flush();
 				out.close();
+				
 			} catch (IOException e) {
 				Log.e(TAG, "File transfer failed:", e);
 			}

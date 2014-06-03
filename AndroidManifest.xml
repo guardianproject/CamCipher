@@ -7,6 +7,8 @@
     <uses-sdk
         android:minSdkVersion="9"
         android:targetSdkVersion="17" />
+        <uses-permission android:name="android.permission.CAMERA" />
+        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:icon="@drawable/icon"
@@ -27,11 +29,21 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+        
+         <activity
+            android:name=".SecureSelfieActivity"
+            android:label="Secure Selfie"
+                android:theme="@android:style/Theme.NoTitleBar">                         
+            
+        </activity>
 
         <provider
             android:name=".IOCipherContentProvider"
             android:authorities="info.guardianproject.iocipherexample"
-            android:exported="true" />
+            android:exported="true"
+            android:multiprocess="true"
+            android:syncable="false"            
+             />
     </application>
 
 </manifest>
