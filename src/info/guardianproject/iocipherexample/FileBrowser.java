@@ -112,7 +112,13 @@ public class FileBrowser extends ListActivity {
         	startActivityForResult(intent, 1);
         	
         	return true;
+        case R.id.menu_video:
         	
+        	intent = new Intent(this,VideoRecorderActivity.class);
+        	intent.putExtra("basepath", "/");
+        	startActivityForResult(intent, 1);
+        	
+        	return true;	
         }	
         
         return false;
@@ -333,9 +339,20 @@ public class FileBrowser extends ListActivity {
 			label.setText(items[position]);
 			File f = new File(path.get(position)); // get the file according the
 													// position
+			
+			String mimeType = null;
+
+			String[] tokens = f.getName().split("\\.(?=[^\\.]+$)");
+			
+			if (tokens.length > 1)
+				mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(f.getName().split("\\.")[1]);
+			
+			if (mimeType == null)
+				mimeType = "application/octet-stream";
+			
 			if (f.isDirectory()) {
 				icon.setImageResource(R.drawable.folder);
-			} else {
+			} else if (mimeType.startsWith("image")){
 				
 				try
 				{
@@ -347,6 +364,11 @@ public class FileBrowser extends ListActivity {
 					icon.setImageResource(R.drawable.text);	
 				}
 			}
+			else
+			{
+				icon.setImageResource(R.drawable.text);
+			}
+			
 			return (row);
 		}
 

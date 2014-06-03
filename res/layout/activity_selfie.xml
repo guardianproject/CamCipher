@@ -30,14 +30,6 @@
         android:orientation="vertical"
         android:padding="20dp" >
 
-        <TextView
-            android:id="@+id/tvTakeYourPhoto"         
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center_horizontal"
-            android:text="take a photo" />
-
         <Button
             android:id="@+id/surface_grabber_button"
             android:layout_width="82dp"

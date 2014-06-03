@@ -21,8 +21,12 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
  <item android:id="@+id/menu_camera"
-        android:title="Secure Selfie"
+        android:title="Selfie"
          android:showAsAction="always"
          />
 
+ <item android:id="@+id/menu_video"
+        android:title="Video"
+         android:showAsAction="always"
+         />
 </menu>
