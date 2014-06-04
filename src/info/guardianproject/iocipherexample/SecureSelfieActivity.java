@@ -29,7 +29,7 @@ public class SecureSelfieActivity extends SurfaceGrabberActivity {
 	@Override
 	protected int getLayout()
 	{
-		return R.layout.activity_selfie;
+		return R.layout.camera;
 	}
 	
 	@Override

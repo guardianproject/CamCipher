@@ -59,7 +59,7 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 
 	protected int getLayout()
 	{
-		return R.layout.activity_surface_grabber;
+		return R.layout.camera;
 	}
 	
 	protected int getCameraDirection()

@@ -39,11 +39,10 @@ public class VideoRecorderActivity extends Activity implements Callback {
     public MediaRecorder mrec;
     private Camera mCamera;
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_selfie);
+        setContentView(R.layout.camera);
 
         surfaceView = (SurfaceView) findViewById(R.id.surface_grabber_holder);
         mCamera = Camera.open();
@@ -174,13 +173,11 @@ public class VideoRecorderActivity extends Activity implements Callback {
         if(mrec!=null)
         {    
     		mrec.stop();
-    		mrec.reset();
-    		mrec.release();
     		
-    		mCamera.release();
+    		releaseMediaRecorder();
     		
-    		mrec = null;
-    		mCamera = null;
+    		releaseCamera();
+    		
         }
     }
 
@@ -189,6 +186,7 @@ public class VideoRecorderActivity extends Activity implements Callback {
         if (mrec != null) {
             mrec.reset(); // clear recorder configuration
             mrec.release(); // release the recorder object
+            mrec = null;
         }
     }
 

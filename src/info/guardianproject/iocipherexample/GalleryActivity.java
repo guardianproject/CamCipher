@@ -22,7 +22,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -39,7 +38,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class FileBrowser extends ListActivity {
+public class GalleryActivity extends ListActivity {
 	private final static String TAG = "FileBrowser";
 
 	private List<String> item = null;
@@ -239,13 +238,22 @@ public class FileBrowser extends ListActivity {
 								if (mimeType == null)
 									mimeType = "application/octet-stream";
 	
-
+								if (mimeType.startsWith("image"))
+								{
+									 Intent intent = new Intent(GalleryActivity.this,ImageViewerActivity.class);
+									  intent.setType(mimeType);
+									  intent.putExtra("vfs", file.getAbsolutePath());
+									  startActivity(intent);	
+								}
+								else
+								{
 						          Intent intent = new Intent(Intent.ACTION_VIEW);													
-									
 								  intent.setType(mimeType);
 								  intent.setData(uri);
 									
 								  startActivity(intent);
+								}
+								 
 								
 							} catch (ActivityNotFoundException e) {
 								Log.e(TAG, "No relevant Activity found", e);
@@ -326,7 +334,7 @@ public class FileBrowser extends ListActivity {
 	class IconicList extends ArrayAdapter {
 
 		public IconicList() {
-			super(FileBrowser.this, R.layout.row, items);
+			super(GalleryActivity.this, R.layout.row, items);
 
 			// TODO Auto-generated constructor stub
 		}
@@ -336,7 +344,7 @@ public class FileBrowser extends ListActivity {
 			View row = inflater.inflate(R.layout.row, null);
 			TextView label = (TextView) row.findViewById(R.id.label);
 			ImageView icon = (ImageView) row.findViewById(R.id.icon);
-			label.setText(items[position]);
+			
 			File f = new File(path.get(position)); // get the file according the
 													// position
 			
@@ -349,6 +357,17 @@ public class FileBrowser extends ListActivity {
 			
 			if (mimeType == null)
 				mimeType = "application/octet-stream";
+			
+			StringBuffer labelText = new StringBuffer();
+			labelText.append(items[position]).append('\n');
+			
+			//TODO this lastModified is returning a strange value
+			//Date dateMod = new Date(f.lastModified());
+			//labelText.append("Modified: " ).append(dateMod.toGMTString()).append('\n');
+			
+			labelText.append("Size: ").append(f.length());
+					
+			label.setText(labelText.toString());
 			
 			if (f.isDirectory()) {
 				icon.setImageResource(R.drawable.folder);
