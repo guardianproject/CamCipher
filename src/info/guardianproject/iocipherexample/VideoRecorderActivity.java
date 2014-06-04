@@ -99,11 +99,14 @@ public class VideoRecorderActivity extends Activity implements Callback {
         //this sets the streaming format "TS"
         mrec.setOutputFormat(/*MediaRecorder.OutputFormat.OUTPUT_FORMAT_MPEG2TS*/8);
         
+        
+        
         CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
  
         int width=640, height=480;
         int frameRate = 30;
         mrec.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        
         mrec.setVideoSize(width, height);
         mrec.setVideoFrameRate(frameRate);
         mrec.setVideoEncodingBitRate(cpHigh.videoBitRate);

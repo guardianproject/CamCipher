@@ -59,6 +59,8 @@ public class IOCipherContentProvider extends ContentProvider {
 				
 				}		
 					).start();
+			
+			
 		} catch (IOException e) {
 			Log.e(TAG, "Error opening pipe", e);
 			throw new FileNotFoundException("Could not open pipe for: "
@@ -98,7 +100,7 @@ public class IOCipherContentProvider extends ContentProvider {
 
 		PipeFeederThread(InputStream in, OutputStream out) {
 			this.in = in;
-			this.out = new BufferedOutputStream(out, 64000);	
+			this.out = new BufferedOutputStream(out, 32000);	
 			setDaemon(true);
 		}
 
@@ -110,8 +112,14 @@ public class IOCipherContentProvider extends ContentProvider {
 
 			try {
 				
+				int idx = 0;
+				
 				while ((len = in.read(buf)) != -1)
+				{
 					out.write(buf, 0, len);
+					idx+=buf.length;
+					Log.d(TAG,"writing video at " + idx);
+				}
 				
 				in.close();
 				out.flush();

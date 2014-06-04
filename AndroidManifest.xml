@@ -10,6 +10,8 @@
         <uses-permission android:name="android.permission.CAMERA" />
         <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    
         
     <application
         android:icon="@drawable/icon"
@@ -48,6 +50,13 @@
                  <activity
             android:name=".ImageViewerActivity"
             android:label="Secure Selfie Viewer"
+                android:theme="@android:style/Theme.NoTitleBar">                         
+            
+        </activity>
+        
+                  <activity
+            android:name=".VideoViewerActivity"
+            android:label="Secure Video Viewer"
                 android:theme="@android:style/Theme.NoTitleBar">                         
             
         </activity>

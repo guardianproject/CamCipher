@@ -11,6 +11,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -233,7 +235,7 @@ public class GalleryActivity extends ListActivity {
 								String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 								String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
 								if (fileExtension.equals("ts"))
-									mimeType = "video/*";
+									mimeType = "application/mpeg*";
 								
 								if (mimeType == null)
 									mimeType = "application/octet-stream";
@@ -245,12 +247,13 @@ public class GalleryActivity extends ListActivity {
 									  intent.putExtra("vfs", file.getAbsolutePath());
 									  startActivity(intent);	
 								}
-								else
+								else if (fileExtension.equals("ts") || mimeType.startsWith("video"))
 								{
+									shareVideoUsingStream(file, mimeType);
+								}
+								else {
 						          Intent intent = new Intent(Intent.ACTION_VIEW);													
-								  intent.setType(mimeType);
-								  intent.setData(uri);
-									
+								  intent.setDataAndType(uri, mimeType);
 								  startActivity(intent);
 								}
 								 
@@ -301,6 +304,80 @@ public class GalleryActivity extends ListActivity {
 		}
 		
 	}
+	
+	private ServerSocket ss = null;
+	private boolean keepServerRunning = false;
+	
+	private void shareVideoUsingStream(final File f, final String mimeType)
+	{
+		
+		final int port = 8080;
+		keepServerRunning = false;
+		
+		final String shareMimeType = "application/mpegts";
+		
+		try
+		{
+			if (ss != null)
+				ss.close();
+		}
+		catch (Exception e){}
+		
+		new Thread ()
+		{
+			public void run ()
+			{
+				try {
+					
+					ss = new ServerSocket(port);
+					Socket socket = ss.accept();
+					
+					StringBuilder sb = new StringBuilder();
+					sb.append( "HTTP/1.1 200\r\n");
+					sb.append( "Content-Type: " + shareMimeType + "\r\n");
+					sb.append( "Content-Length: " + f.length() + "\r\n\r\n" );
+					
+					BufferedOutputStream bos = new BufferedOutputStream(socket.getOutputStream());
+					
+					bos.write(sb.toString().getBytes());
+					
+					int len = -1;
+					FileInputStream fis = new FileInputStream(f);
+					
+					int idx = 0;
+					
+					byte[] b = new byte[8096];
+					while ((len = fis.read(b)) != -1)
+					{
+						bos.write(b,0,len);
+						idx+=len;
+						Log.d(TAG,"sharing via stream: " + idx);
+					}
+
+					fis.close();
+					bos.flush();
+					bos.close();
+					
+					socket.close();
+					ss.close();
+					ss = null;
+					
+				} catch (IOException e) {
+					Log.d("ServerShare","web share error",e);
+				}
+			}
+		}.start();
+		
+		Uri uri = Uri.parse("http://localhost:" + port + f.getAbsolutePath());
+		
+		Intent intent = new Intent(GalleryActivity.this,VideoViewerActivity.class);
+												
+		intent.setDataAndType(uri, mimeType);
+		startActivity(intent);
+		  
+		
+	}
+	
 	
 	public java.io.File exportToDisk (File fileIn)
 	{
