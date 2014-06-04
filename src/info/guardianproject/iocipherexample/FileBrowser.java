@@ -233,11 +233,19 @@ public class FileBrowser extends ListActivity {
 							try {
 								String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 								String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
+								if (fileExtension.equals("ts"))
+									mimeType = "video/*";
+								
 								if (mimeType == null)
 									mimeType = "application/octet-stream";
-								
-								scanMediaFile(uri, mimeType);
-								
+	
+
+						          Intent intent = new Intent(Intent.ACTION_VIEW);													
+									
+								  intent.setType(mimeType);
+								  intent.setData(uri);
+									
+								  startActivity(intent);
 								
 							} catch (ActivityNotFoundException e) {
 								Log.e(TAG, "No relevant Activity found", e);
@@ -265,6 +273,8 @@ public class FileBrowser extends ListActivity {
 									
 									String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 									String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
+									if (fileExtension.equals("ts"))
+										mimeType = "video/*";
 									if (mimeType == null)
 										mimeType = "application/octet-stream";
 									
@@ -282,27 +292,6 @@ public class FileBrowser extends ListActivity {
 							}).show();
 		}
 		
-	}
-	
-	private void scanMediaFile (final Uri uri, final String mimeType)
-	{
-		MediaScannerConnection.scanFile(this, new String[] { uri.toString() }, new String[] { mimeType },
-		          new MediaScannerConnection.OnScanCompletedListener() {
-			
-			
-			
-		      public void onScanCompleted(String path, Uri uriPost) {
-		          Log.i(TAG, "Scanned " + path + ":");
-		          Log.i(TAG, "-> uri=" + uri);
-		          
-		          Intent intent = new Intent(Intent.ACTION_VIEW);													
-					
-					intent.setType(mimeType);
-					intent.setData(uri);
-					
-					startActivity(intent);
-		      }
-		 });
 	}
 	
 	public java.io.File exportToDisk (File fileIn)
