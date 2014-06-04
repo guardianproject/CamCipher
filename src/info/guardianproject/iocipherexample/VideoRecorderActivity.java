@@ -2,9 +2,7 @@ package info.guardianproject.iocipherexample;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileOutputStream;
-import info.guardianproject.iocipherexample.IOCipherContentProvider.PipeFeederThread;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,6 +11,7 @@ import java.util.Date;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
+import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
@@ -88,24 +87,39 @@ public class VideoRecorderActivity extends Activity implements Callback {
          path= Environment.getExternalStorageDirectory().getAbsolutePath().toString();
          
          Date date=new Date();
-         filename="/rec"+date.toString().replace(" ", "_").replace(":", "_")+".mp4";
+         filename="/rec"+date.toString().replace(" ", "_").replace(":", "_")+".ts";
          
         mrec = new MediaRecorder(); 
 
         mCamera.lock();
         mCamera.unlock();
 
-        // Please maintain sequence of following code. 
-
-        // If you change sequence it will not work.
         mrec.setCamera(mCamera);    
         mrec.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        mrec.setAudioSource(MediaRecorder.AudioSource.MIC);     
-        mrec.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mrec.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
-        mrec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mrec.setPreviewDisplay(surfaceHolder.getSurface());
+
+        //this sets the streaming format "TS"
+        mrec.setOutputFormat(/*MediaRecorder.OutputFormat.OUTPUT_FORMAT_MPEG2TS*/8);
         
+        CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+ 
+        int width=640, height=480;
+        int frameRate = 30;
+        mrec.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mrec.setVideoSize(width, height);
+        mrec.setVideoFrameRate(frameRate);
+        mrec.setVideoEncodingBitRate(cpHigh.videoBitRate);
+      
+        /**
+        mrec.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mrec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        
+        mrec.setAudioEncodingBitRate(cpHigh.audioBitRate);
+        mrec.setAudioChannels(1);
+        mrec.setAudioSamplingRate(cpHigh.audioSampleRate);
+        */
+        
+        mrec.setPreviewDisplay(surfaceHolder.getSurface());
+ 
         
         ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
         mrec.setOutputFile(pipe[1].getFileDescriptor());
@@ -122,24 +136,28 @@ public class VideoRecorderActivity extends Activity implements Callback {
 
     static class PipeFeederThread extends Thread {
 		InputStream in;
-		BufferedOutputStream out;
+		OutputStream out;
 
 		PipeFeederThread(InputStream in, OutputStream out) {
 			this.in = in;
-			this.out = new BufferedOutputStream(out, 64000);	
+			this.out = out;
 			setDaemon(true);
 		}
 
 		@Override
 		public void run() {
 			
-			byte[] buf = new byte[4096];
+			byte[] buf = new byte[16000];
 			int len;
 
 			try {
-				
+				int idx = 0;
 				while ((len = in.read(buf)) != -1)
+				{
 					out.write(buf, 0, len);
+					idx += buf.length;
+					Log.d("video","writing to IOCipher at " + idx);
+				}
 				
 				in.close();
 				out.flush();
@@ -156,8 +174,9 @@ public class VideoRecorderActivity extends Activity implements Callback {
         if(mrec!=null)
         {    
     		mrec.stop();
-    	
+    		mrec.reset();
     		mrec.release();
+    		
     		mCamera.release();
     		
     		mrec = null;

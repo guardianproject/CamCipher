@@ -244,6 +244,17 @@ public class FileBrowser extends ListActivity {
 							}
 						}
 					})
+					.setNegativeButton("Delete",
+							new DialogInterface.OnClickListener() {
+						
+							public void onClick(DialogInterface dialog,
+								int which) {
+								
+								file.delete();
+								getFileList(root);
+							}
+							
+					})
 					.setPositiveButton("Share...",
 							new DialogInterface.OnClickListener() {
 
