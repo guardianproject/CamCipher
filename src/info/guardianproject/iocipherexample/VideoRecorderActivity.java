@@ -96,7 +96,7 @@ public class VideoRecorderActivity extends Activity implements Callback {
 
         mrec.setCamera(mCamera);    
         mrec.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-
+        
         //this sets the streaming format "TS"
         mrec.setOutputFormat(/*MediaRecorder.OutputFormat.OUTPUT_FORMAT_MPEG2TS*/8);
         

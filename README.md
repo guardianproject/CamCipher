@@ -10,6 +10,9 @@ It also handles recording video (without audio) into IOCipher using the MPEG_TS 
 
 This example does not handle proper password/phrase management. Please see our CacheWord library at https://github.com/guardianproject/cacheword for help with that.
 
+![Screenshot 1](screenshot1.png)
+![Screenshot 2](screenshot2.png)
+
 Please report bugs here:
 https://dev.guardianproject.info/projects/iocipher/issues
 
