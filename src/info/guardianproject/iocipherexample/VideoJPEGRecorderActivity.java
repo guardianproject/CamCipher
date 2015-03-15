@@ -15,8 +15,9 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 
@@ -77,16 +78,6 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 		
 		if (mIsRecording && mFrameQ != null)
 		{
-			synchronized (mFrameQ)
-			{
-				if (data != null)
-				{
-					mFrameQ.add(data);
-					
-				   
-				}
-			}
-			
 			if (mLastWidth == -1)
 			{
 			 Camera.Parameters parameters = camera.getParameters();
@@ -98,6 +89,27 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 			  //  parameters.getPreviewFpsRange(range);
 			  //  mFPS = range[Camera.Parameters.PREVIEW_FPS_MAX_INDEX];
 			}
+			
+			YuvImage yuv = new YuvImage(data, mPreviewFormat, mLastWidth, mLastHeight, null);
+
+		    ByteArrayOutputStream out = new ByteArrayOutputStream();
+		    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), 30, out);
+
+		    byte[] bytes = out.toByteArray();
+			
+			synchronized (mFrameQ)
+			{
+				if (bytes != null)
+				{
+					
+				    
+					mFrameQ.add(bytes);
+					
+				   
+				}
+			}
+			
+			
 			    
 		}
 		
@@ -108,17 +120,26 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 		String fileName = "video" + new java.util.Date().getTime() + ".mp4";
 		info.guardianproject.iocipher.File fileOut = new info.guardianproject.iocipher.File(mFileBasePath,fileName);
 		//java.io.File fileOut = new java.io.File("/sdcard",fileName);
-		new Encoder().execute(fileOut);
+		new Encoder(fileOut).start();
 	}
 	
-	private class Encoder extends AsyncTask<File, Integer, Integer> {
+	private class Encoder extends Thread {
 		private static final String TAG = "ENCODER";
 
-		protected Integer doInBackground(File... params) {
+		private File fileOut;
+		
+		public Encoder (File fileOut)
+		{
+			this.fileOut = fileOut;
+			this.setPriority(Thread.MAX_PRIORITY);
+		}
+		
+		public void run ()
+		{
 			SequenceEncoder se = null;
 			try {
 				
-				FileOutputStream fos = new info.guardianproject.iocipher.FileOutputStream(params[0]);
+				FileOutputStream fos = new info.guardianproject.iocipher.FileOutputStream(fileOut);
 				se = new SequenceEncoder(new IOCipherFileChannelWrapper(fos.getChannel()),mLastWidth,mLastHeight,mFPS);
 				//se = new SequenceEncoder(params[0]);
 				int i = 0;
@@ -127,41 +148,46 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 				{
 					if (mFrameQ.peek() != null)
 					{
-						byte[] frame = mFrameQ.pop();
+						byte[] bytes = mFrameQ.pop();
 						
-					    YuvImage yuv = new YuvImage(frame, mPreviewFormat, mLastWidth, mLastHeight, null);
-
-					    ByteArrayOutputStream out = new ByteArrayOutputStream();
-					    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), 100, out);
-
-					    byte[] bytes = out.toByteArray();
-						    
 						Bitmap bmp = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
 						se.encodeImage(bmp);
-
-						publishProgress(i++);
+						
+						Message msg = new Message();
+						msg.getData().putInt("frames", mFrameQ.size());
+						h.sendMessage(msg);
 					}
 
 				}
-				publishProgress(0);
 				se.finish();
 				
 			} catch (IOException e) {
 				Log.e(TAG, "IO", e);
 			}
 
-			return 0;
 		}
 
-		@Override
-		protected void onProgressUpdate(Integer... values) {
-			
-			if (!mIsRecording)
-				if (values[0] == 0)
-					progress.setText("");
-				else
-					progress.setText("Processing...");
-		}
+		
 	}
+	
+	Handler h = new Handler ()
+	{
+
+		@Override
+		public void handleMessage(Message msg) {
+			// TODO Auto-generated method stub
+			super.handleMessage(msg);
+			
+			int frames = msg.getData().getInt("frames");
+			
+				if (!mIsRecording)
+					if (frames == 0)
+						progress.setText("");
+					else
+						progress.setText("Processing: " + frames + " frames left...");
+			
+		}
+		
+	};
 	
 }
