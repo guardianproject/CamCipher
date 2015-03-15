@@ -75,7 +75,8 @@ public class IOCipherContentProvider extends ContentProvider {
 		
 		Log.d(TAG,"query called: " + url.toString());
 		
-		throw new RuntimeException("Operation not supported");
+		//throw new RuntimeException("Operation not supported");
+		return null;
 	}
 
 	@Override

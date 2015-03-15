@@ -22,6 +22,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -47,10 +48,9 @@ public class GalleryActivity extends ListActivity {
 	private List<String> path = null;
 	private TextView fileInfo;
 	private String[] items;
-	private String dbFile;
+	private java.io.File dbFile;
 	private String root = "/";
-	private VirtualFileSystem vfs;
-
+	private String mPassword = "this is just a test";
 	/** Called when the activity is first created. */
 
 	@Override
@@ -72,24 +72,42 @@ public class GalleryActivity extends ListActivity {
 
 		setContentView(R.layout.main);
 		fileInfo = (TextView) findViewById(R.id.info);
-		dbFile = getDir("vfs", MODE_PRIVATE).getAbsolutePath() + "/myfiles.db";
+		dbFile = new java.io.File(getDir("vfs", MODE_PRIVATE),"gallery.db");
+		dbFile.getParentFile().mkdirs();
+		
+		if (!dbFile.exists())
+			VirtualFileSystem.get().createNewContainer(dbFile.getAbsolutePath(), mPassword);
 	}
 
 	protected void onResume() {
 		super.onResume();
-		vfs = new VirtualFileSystem(dbFile);
-		// TODO don't use a hard-coded password! prompt for the password
-		vfs.mount("my fake password");
+		
+		if (!VirtualFileSystem.get().isMounted())
+		{
+			// TODO don't use a hard-coded password! prompt for the password
+			VirtualFileSystem.get().mount(dbFile.getAbsolutePath(),mPassword);
+		}
+		
 		getFileList(root);
+		
+		if (sHttp != null)
+		{
+			sHttp.close();
+		}
 	}
 
 	protected void onDestroy() {
 		super.onDestroy();
-		try
+		
+		/**
+		if (VirtualFileSystem.get().is)
 		{
-			vfs.mount("XXXXXXXXXXXXXXX"); //this ensures the old password is cleared
-		}catch(IllegalArgumentException iae){}
-		//vfs.unmount();
+			try
+			{
+				VirtualFileSystem.get().unmount();
+			}catch(IllegalArgumentException iae){}
+		}*/
+		
 	}
 	
 	@Override
@@ -115,7 +133,7 @@ public class GalleryActivity extends ListActivity {
         	return true;
         case R.id.menu_video:
         	
-        	intent = new Intent(this,VideoRecorderActivity.class);
+        	intent = new Intent(this,VideoJPEGRecorderActivity.class);
         	intent.putExtra("basepath", "/");
         	startActivityForResult(intent, 1);
         	
@@ -247,7 +265,7 @@ public class GalleryActivity extends ListActivity {
 									  intent.putExtra("vfs", file.getAbsolutePath());
 									  startActivity(intent);	
 								}
-								else if (fileExtension.equals("ts") || mimeType.startsWith("video"))
+								else if (fileExtension.equals("mp4") || mimeType.startsWith("video"))
 								{
 									shareVideoUsingStream(file, mimeType);
 								}
@@ -280,17 +298,21 @@ public class GalleryActivity extends ListActivity {
 								// @Override
 								public void onClick(DialogInterface dialog,
 										int which) {
+									
+									java.io.File exportFile = exportToDisk(file);
+									Uri uriExport = Uri.fromFile(exportFile);
+									
 									Intent intent = new Intent(Intent.ACTION_SEND);
 									
 									String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 									String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
-									if (fileExtension.equals("ts"))
+									if (fileExtension.equals("mp4"))
 										mimeType = "video/*";
 									if (mimeType == null)
 										mimeType = "application/octet-stream";
 									
 									intent.setDataAndType(uri, mimeType);
-									intent.putExtra(Intent.EXTRA_STREAM, uri);
+									intent.putExtra(Intent.EXTRA_STREAM, uriExport);
 									intent.putExtra(Intent.EXTRA_TITLE, file.getName());
 									intent.putExtra(Intent.EXTRA_SUBJECT, "shared from IOCipher");
 									
@@ -305,75 +327,34 @@ public class GalleryActivity extends ListActivity {
 		
 	}
 	
-	private ServerSocket ss = null;
-	private boolean keepServerRunning = false;
+	StreamOverHttp sHttp = null;
 	
 	private void shareVideoUsingStream(final File f, final String mimeType)
 	{
 		
 		final int port = 8080;
-		keepServerRunning = false;
 		
-		final String shareMimeType = "application/mpegts";
+		final String shareMimeType = "video/mp4";
 		
-		try
-		{
-			if (ss != null)
-				ss.close();
+		try {
+			sHttp = new StreamOverHttp(f,shareMimeType,f.length(),new info.guardianproject.iocipher.FileInputStream(f),port);
+			
+			Uri uri = Uri.parse("http://localhost:" + port + f.getAbsolutePath());
+			
+			Intent intent = new Intent(GalleryActivity.this,VideoViewerActivity.class);
+													
+			intent.setDataAndType(uri, mimeType);
+			startActivity(intent);
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		catch (Exception e){}
 		
-		new Thread ()
-		{
-			public void run ()
-			{
-				try {
-					
-					ss = new ServerSocket(port);
-					Socket socket = ss.accept();
-					
-					StringBuilder sb = new StringBuilder();
-					sb.append( "HTTP/1.1 200\r\n");
-					sb.append( "Content-Type: " + shareMimeType + "\r\n");
-					sb.append( "Content-Length: " + f.length() + "\r\n\r\n" );
-					
-					BufferedOutputStream bos = new BufferedOutputStream(socket.getOutputStream());
-					
-					bos.write(sb.toString().getBytes());
-					
-					int len = -1;
-					FileInputStream fis = new FileInputStream(f);
-					
-					int idx = 0;
-					
-					byte[] b = new byte[8096];
-					while ((len = fis.read(b)) != -1)
-					{
-						bos.write(b,0,len);
-						idx+=len;
-						Log.d(TAG,"sharing via stream: " + idx);
-					}
-
-					fis.close();
-					bos.flush();
-					bos.close();
-					
-					socket.close();
-					ss.close();
-					ss = null;
-					
-				} catch (IOException e) {
-					Log.d("ServerShare","web share error",e);
-				}
-			}
-		}.start();
 		
-		Uri uri = Uri.parse("http://localhost:" + port + f.getAbsolutePath());
-		
-		Intent intent = new Intent(GalleryActivity.this,VideoViewerActivity.class);
-												
-		intent.setDataAndType(uri, mimeType);
-		startActivity(intent);
 		  
 		
 	}

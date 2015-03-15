@@ -41,7 +41,7 @@
         </activity>
         
                 <activity
-            android:name=".VideoRecorderActivity"
+            android:name=".VideoJPEGRecorderActivity"
             android:label="Secure Video"
                 android:theme="@android:style/Theme.NoTitleBar">                         
             

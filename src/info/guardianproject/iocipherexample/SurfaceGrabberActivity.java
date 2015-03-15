@@ -9,6 +9,7 @@ import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.PictureCallback;
+import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,7 +23,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class SurfaceGrabberActivity extends Activity implements OnClickListener, SurfaceHolder.Callback, PictureCallback {
+public class SurfaceGrabberActivity extends Activity implements OnClickListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
 	Button button;
 	TextView progress;
 
@@ -46,10 +47,8 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 		button = (Button) findViewById(R.id.surface_grabber_button);
 		button.setOnClickListener(this);
 		
-		/**
 		progress = (TextView) findViewById(R.id.surface_grabber_progress);
-		progress.setText(String.valueOf(baseImages.size()));
-		 */
+		
 		view = (SurfaceView) findViewById(R.id.surface_grabber_holder);
 		holder = view.getHolder();
 		holder.addCallback(this);
@@ -119,12 +118,15 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 					//params.setJpegThumbnailSize(128,128);
 //					params.setPreviewSize(size.width/2,size.height/2); 
 				 
+				 
 				 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_BACK)
 				 {
 					 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 				 }
 									
 					camera.setParameters(params);
+					
+					camera.setPreviewCallback(this);
 
 		    	 return true;
 		     }
@@ -248,5 +250,11 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 	     camera.setDisplayOrientation(result);
 	     
 	     return result;
+	}
+
+	@Override
+	public void onPreviewFrame(byte[] data, Camera camera) {
+		// TODO Auto-generated method stub
+		
 	}
 }
