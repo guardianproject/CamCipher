@@ -32,7 +32,7 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 	private int mLastWidth = -1;
 	private int mLastHeight = -1;
 	private int mPreviewFormat = -1;
-	private int mFPS = 10;
+	private int mFPS = 15;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -79,14 +79,26 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 		{
 			synchronized (mFrameQ)
 			{
-				mFrameQ.add(data);
-				
-			    Camera.Parameters parameters = camera.getParameters();
+				if (data != null)
+				{
+					mFrameQ.add(data);
+					
+				   
+				}
+			}
+			
+			if (mLastWidth == -1)
+			{
+			 Camera.Parameters parameters = camera.getParameters();
 			    mLastWidth = parameters.getPreviewSize().width;
 			    mLastHeight = parameters.getPreviewSize().height;
 			    mPreviewFormat = parameters.getPreviewFormat();
 			    
+			  //  int[] range = new int[2];
+			  //  parameters.getPreviewFpsRange(range);
+			  //  mFPS = range[Camera.Parameters.PREVIEW_FPS_MAX_INDEX];
 			}
+			    
 		}
 		
 	}
@@ -120,7 +132,7 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 					    YuvImage yuv = new YuvImage(frame, mPreviewFormat, mLastWidth, mLastHeight, null);
 
 					    ByteArrayOutputStream out = new ByteArrayOutputStream();
-					    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), 50, out);
+					    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), 100, out);
 
 					    byte[] bytes = out.toByteArray();
 						    
