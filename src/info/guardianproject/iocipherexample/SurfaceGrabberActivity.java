@@ -36,7 +36,10 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 
 	private final static String LOG = "Camera";
 
-	private int mRotation = -1;
+	int mRotation = -1;
+	
+	int mPreviewWidth = 720;
+	int mPreviewHeight = 480;
 	
 	@SuppressWarnings("deprecation")
 	@Override
@@ -110,17 +113,11 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 		     {
 		    	 camera = Camera.open(nCam);
 		    	 cameraInfo = info;
-		    //	 Size size = choosePictureSize(camera.getParameters().getSupportedPictureSizes());
 
 		    	 Camera.Parameters params = camera.getParameters();
-				 params.setPictureFormat(ImageFormat.JPEG);
-					//params.setPictureSize(size.width,size.height);
-					//params.setJpegThumbnailSize(128,128);
-//					params.setPreviewSize(size.width/2,size.height/2); 
-				 params.setPreviewSize(720, 480);
-				 //params.setPreviewFpsRange(10, 20);
-				 
-				 
+				 params.setPictureFormat(ImageFormat.JPEG); 
+				 params.setPreviewSize(mPreviewWidth, mPreviewHeight);
+
 				 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_BACK)
 				 {
 					 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);

@@ -1,8 +1,5 @@
 package info.guardianproject.iocipherexample;
 
-import info.guardianproject.iocipher.File;
-import info.guardianproject.iocipher.FileOutputStream;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,7 +11,8 @@ import android.hardware.Camera.Parameters;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.util.Log;
@@ -39,6 +37,30 @@ public class VideoRecorderActivity extends Activity implements Callback {
     public MediaRecorder mrec;
     private Camera mCamera;
 
+    private Handler h = new Handler ()
+    {
+
+		@Override
+		public void handleMessage(Message msg) {
+		
+			super.handleMessage(msg);
+			
+			try
+			{
+				if (msg.what == 1)
+					startRecording();
+				else if (msg.what == 2)
+					stopRecording();
+			}
+			catch (IOException ioe)
+			{
+				Log.e("Video","error recording",ioe);
+			}
+			
+		}
+    	
+    };
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,9 +83,9 @@ public class VideoRecorderActivity extends Activity implements Callback {
 				try
 				{
 					if (mrec == null)
-						startRecording();
+						h.sendEmptyMessage(1);
 					else					
-						stopRecording();
+						h.sendEmptyMessage(2);
 					
 				}
 				catch (Exception e)
@@ -81,12 +103,9 @@ public class VideoRecorderActivity extends Activity implements Callback {
             mCamera = Camera.open();
         
          String filename;
-         String path;
         
-         path= Environment.getExternalStorageDirectory().getAbsolutePath().toString();
-         
          Date date=new Date();
-         filename="/rec"+date.toString().replace(" ", "_").replace(":", "_")+".ts";
+         filename="/rec"+date.toString().replace(" ", "_").replace(":", "_")+".mp4";
          
         mrec = new MediaRecorder(); 
 
@@ -95,40 +114,38 @@ public class VideoRecorderActivity extends Activity implements Callback {
 
         mrec.setCamera(mCamera);    
         mrec.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        //mrec.setAudioSource(MediaRecorder.AudioSource.MIC);
         
         //this sets the streaming format "TS"
-        mrec.setOutputFormat(/*MediaRecorder.OutputFormat.OUTPUT_FORMAT_MPEG2TS*/8);
+       mrec.setOutputFormat(/*MediaRecorder.OutputFormat.OUTPUT_FORMAT_MPEG2TS*/8);
         
-        
+      //  mrec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         
         CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
  
-        int width=640, height=480;
+        int width=720, height=480;
         int frameRate = 30;
-        mrec.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         
+        mrec.setVideoEncoder(MediaRecorder.VideoEncoder.H264);        
         mrec.setVideoSize(width, height);
         mrec.setVideoFrameRate(frameRate);
         mrec.setVideoEncodingBitRate(cpHigh.videoBitRate);
       
-        /**
-        mrec.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mrec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        
+        /*
+        mrec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);                
         mrec.setAudioEncodingBitRate(cpHigh.audioBitRate);
         mrec.setAudioChannels(1);
         mrec.setAudioSamplingRate(cpHigh.audioSampleRate);
-        */
+        */        
         
         mrec.setPreviewDisplay(surfaceHolder.getSurface());
  
-        
         ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
         mrec.setOutputFile(pipe[1].getFileDescriptor());
         
         AutoCloseInputStream acis = new AutoCloseInputStream(pipe[0]);
-        File file = new File(filename);        
-        new PipeFeederThread(acis,new FileOutputStream(file)).start();
+        info.guardianproject.iocipher.File file = new info.guardianproject.iocipher.File(filename);        
+        new PipeFeederThread(acis,new info.guardianproject.iocipher.FileOutputStream(file)).start();
         
         mrec.prepare();
         mrec.start();

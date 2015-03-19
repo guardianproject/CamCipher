@@ -20,13 +20,40 @@
 <menu 
     xmlns:android="http://schemas.android.com/apk/res/android">
 
- <item android:id="@+id/menu_camera"
+ <item
+        android:title="Photo"
+         android:showAsAction="always"
+         >
+         <menu>
+ <item android:id="@+id/menu_camera_regular"
+        android:title="Regular"
+         android:showAsAction="always"
+         />            
+          
+ <item android:id="@+id/menu_camera_selfie"
         android:title="Selfie"
          android:showAsAction="always"
          />
+             
+         </menu>
+     </item>
 
- <item android:id="@+id/menu_video"
+ <item
         android:title="Video"
          android:showAsAction="always"
+         >
+     <menu>
+         <item android:id="@+id/menu_video_jpeg"
+        android:title="Video (JPEG)"
+         android:showAsAction="always"
          />
+         
+         <item android:id="@+id/menu_video_native"
+        android:title="Video (Native)"
+         android:showAsAction="always"
+         />
+         
+     </menu>
+     
+ </item>
 </menu>

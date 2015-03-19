@@ -18,11 +18,14 @@ public class SecureSelfieActivity extends SurfaceGrabberActivity {
 	
 	private String mFileBasePath = null;
 	
+	private boolean mIsSelfie = false;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 
+		mIsSelfie = getIntent().getBooleanExtra("selfie", false);
 		
 	}
 
@@ -34,8 +37,10 @@ public class SecureSelfieActivity extends SurfaceGrabberActivity {
 	
 	@Override
 	protected int getCameraDirection() {
-		return CameraInfo.CAMERA_FACING_FRONT;
-		//return CameraInfo.CAMERA_FACING_BACK;
+		if (mIsSelfie)
+			return CameraInfo.CAMERA_FACING_FRONT;
+		else
+			return CameraInfo.CAMERA_FACING_BACK;
 	}
 
 	@Override

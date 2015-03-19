@@ -63,7 +63,7 @@ public class StreamOverHttp{
                   new HttpSession(accept);
                }
             }catch(IOException e){
-               e.printStackTrace();
+               log("socket closed: "+e);
             }
          }
  

@@ -122,22 +122,41 @@ public class GalleryActivity extends ListActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+    	
+    	Intent intent = null;
+    	
         switch (item.getItemId()) {
 
-        case R.id.menu_camera:
+        case R.id.menu_camera_regular:
         	
-        	Intent intent = new Intent(this,SecureSelfieActivity.class);
+        	intent = new Intent(this,SecureSelfieActivity.class);
         	intent.putExtra("basepath", "/");
+        	intent.putExtra("selfie", false);
         	startActivityForResult(intent, 1);
         	
         	return true;
-        case R.id.menu_video:
+        	case R.id.menu_camera_selfie:
+        	
+        	intent = new Intent(this,SecureSelfieActivity.class);
+        	intent.putExtra("basepath", "/");
+        	intent.putExtra("selfie", true);
+        	startActivityForResult(intent, 1);
+        	
+        	return true;
+        case R.id.menu_video_jpeg:
         	
         	intent = new Intent(this,VideoJPEGRecorderActivity.class);
         	intent.putExtra("basepath", "/");
         	startActivityForResult(intent, 1);
         	
         	return true;	
+        case R.id.menu_video_native:
+        	
+        	intent = new Intent(this,VideoRecorderActivity.class);
+        	intent.putExtra("basepath", "/");
+        	startActivityForResult(intent, 1);
+        	
+        	return true;
         }	
         
         return false;
@@ -306,14 +325,13 @@ public class GalleryActivity extends ListActivity {
 									
 									String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 									String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
-									if (fileExtension.equals("mp4"))
+									if (fileExtension.equals("mp4")||fileExtension.equals("mkv"))
 										mimeType = "video/*";
 									if (mimeType == null)
 										mimeType = "application/octet-stream";
 									
 									intent.setDataAndType(uri, mimeType);
 									intent.putExtra(Intent.EXTRA_STREAM, uriExport);
-									intent.putExtra(Intent.EXTRA_TITLE, file.getName());
 									intent.putExtra(Intent.EXTRA_SUBJECT, "shared from IOCipher");
 									
 									try {
