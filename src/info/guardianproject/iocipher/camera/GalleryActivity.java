@@ -93,10 +93,6 @@ public class GalleryActivity extends ListActivity {
 		
 		getFileList(root);
 		
-		if (sHttp != null)
-		{
-			sHttp.close();
-		}
 	}
 
 	protected void onDestroy() {
@@ -247,7 +243,7 @@ public class GalleryActivity extends ListActivity {
 
 			}
 		} else {
-			Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
+			//Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
 			final Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
 			
 			new AlertDialog.Builder(this)
@@ -315,8 +311,8 @@ public class GalleryActivity extends ListActivity {
 								public void onClick(DialogInterface dialog,
 										int which) {
 									
-									java.io.File exportFile = exportToDisk(file);
-									Uri uriExport = Uri.fromFile(exportFile);
+									//java.io.File exportFile = exportToDisk(file);
+									//Uri uriExport = Uri.fromFile(exportFile);
 									
 									Intent intent = new Intent(Intent.ACTION_SEND);
 									
@@ -328,9 +324,9 @@ public class GalleryActivity extends ListActivity {
 										mimeType = "application/octet-stream";
 									
 									intent.setDataAndType(uri, mimeType);
-									intent.putExtra(Intent.EXTRA_STREAM, uriExport);
-									intent.putExtra(Intent.EXTRA_SUBJECT, exportFile.getName());
-									intent.putExtra(Intent.EXTRA_TITLE, exportFile.getName());
+									intent.putExtra(Intent.EXTRA_STREAM, uri);
+									intent.putExtra(Intent.EXTRA_SUBJECT, file.getName());
+									intent.putExtra(Intent.EXTRA_TITLE, file.getName());
 									
 									try {
 										startActivity(Intent.createChooser(intent, "Share this!"));
@@ -340,38 +336,6 @@ public class GalleryActivity extends ListActivity {
 								}
 							}).show();
 		}
-		
-	}
-	
-	StreamOverHttp sHttp = null;
-	
-	private void shareVideoUsingStream(final File f, final String mimeType)
-	{
-		
-		final int port = 8080;
-		
-		final String shareMimeType = "video/mp4";
-		
-		try {
-			sHttp = new StreamOverHttp(f,shareMimeType,f.length(),new info.guardianproject.iocipher.FileInputStream(f),port);
-			
-			Uri uri = Uri.parse("http://localhost:" + port + f.getAbsolutePath());
-			
-			Intent intent = new Intent(GalleryActivity.this,VideoViewerActivity.class);
-													
-			intent.setDataAndType(uri, mimeType);
-			startActivity(intent);
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		  
 		
 	}
 	
