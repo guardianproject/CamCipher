@@ -1,4 +1,4 @@
-package info.guardianproject.iocipherexample.encoders;
+package info.guardianproject.iocipher.camera.encoders;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

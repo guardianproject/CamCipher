@@ -1,7 +1,8 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera.viewer;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
+import info.guardianproject.iocipher.camera.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;

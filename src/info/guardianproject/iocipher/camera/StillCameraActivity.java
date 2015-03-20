@@ -1,7 +1,8 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileOutputStream;
+import info.guardianproject.iocipher.camera.R;
 
 import java.io.BufferedOutputStream;
 
@@ -12,20 +13,18 @@ import android.hardware.Camera.CameraInfo;
 import android.media.ExifInterface;
 import android.os.Bundle;
 
-public class SecureSelfieActivity extends SurfaceGrabberActivity {
+public class StillCameraActivity extends CameraBaseActivity {
 	
 	private final static String LOG = "SecureSelfie";
 	
 	private String mFileBasePath = null;
 	
-	private boolean mIsSelfie = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 
-		mIsSelfie = getIntent().getBooleanExtra("selfie", false);
 		
 	}
 
@@ -35,14 +34,6 @@ public class SecureSelfieActivity extends SurfaceGrabberActivity {
 		return R.layout.camera;
 	}
 	
-	@Override
-	protected int getCameraDirection() {
-		if (mIsSelfie)
-			return CameraInfo.CAMERA_FACING_FRONT;
-		else
-			return CameraInfo.CAMERA_FACING_BACK;
-	}
-
 	@Override
 	public void onPictureTaken(final byte[] data, Camera camera) {		
 		File fileSecurePicture;
@@ -57,13 +48,18 @@ public class SecureSelfieActivity extends SurfaceGrabberActivity {
 
 			setResult(Activity.RESULT_OK, new Intent().putExtra("path", fileSecurePicture.getAbsolutePath()));
 
-			finish();
 		} catch (Exception e) {
 			e.printStackTrace();
 			setResult(Activity.RESULT_CANCELED);
-			finish();
+
 		}
-		finish();
+
+	}
+
+	@Override
+	public void onPreviewFrame(byte[] data, Camera camera) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	

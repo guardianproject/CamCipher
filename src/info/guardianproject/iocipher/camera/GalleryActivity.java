@@ -1,9 +1,15 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
 import info.guardianproject.iocipher.VirtualFileSystem;
+import info.guardianproject.iocipher.camera.io.IOCipherContentProvider;
+import info.guardianproject.iocipher.camera.viewer.ImageViewerActivity;
+import info.guardianproject.iocipher.camera.viewer.MjpegViewerActivity;
+import info.guardianproject.iocipher.camera.viewer.StreamOverHttp;
+import info.guardianproject.iocipher.camera.viewer.VideoViewerActivity;
+import info.guardianproject.iocipher.camera.R;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -11,8 +17,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +26,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -127,33 +130,20 @@ public class GalleryActivity extends ListActivity {
     	
         switch (item.getItemId()) {
 
-        case R.id.menu_camera_regular:
+        case R.id.menu_camera:
         	
-        	intent = new Intent(this,SecureSelfieActivity.class);
+        	intent = new Intent(this,StillCameraActivity.class);
         	intent.putExtra("basepath", "/");
         	intent.putExtra("selfie", false);
         	startActivityForResult(intent, 1);
         	
         	return true;
-        	case R.id.menu_camera_selfie:
         	
-        	intent = new Intent(this,SecureSelfieActivity.class);
+        case R.id.menu_video:
+        	
+        	intent = new Intent(this,VideoCameraActivity.class);
         	intent.putExtra("basepath", "/");
-        	intent.putExtra("selfie", true);
-        	startActivityForResult(intent, 1);
-        	
-        	return true;
-        case R.id.menu_video_jpeg:
-        	
-        	intent = new Intent(this,VideoJPEGRecorderActivity.class);
-        	intent.putExtra("basepath", "/");
-        	startActivityForResult(intent, 1);
-        	
-        	return true;	
-        case R.id.menu_video_native:
-        	
-        	intent = new Intent(this,VideoRecorderActivity.class);
-        	intent.putExtra("basepath", "/");
+        	intent.putExtra("selfie", false);
         	startActivityForResult(intent, 1);
         	
         	return true;
@@ -286,7 +276,14 @@ public class GalleryActivity extends ListActivity {
 								}
 								else if (fileExtension.equals("mp4") || mimeType.startsWith("video"))
 								{
-									shareVideoUsingStream(file, mimeType);
+									Intent intent = new Intent(GalleryActivity.this,MjpegViewerActivity.class);
+									  intent.setType(mimeType);
+									  intent.putExtra("video", file.getAbsolutePath());
+									  intent.putExtra("audio", file.getAbsolutePath() + ".pcm");
+									  
+									  startActivity(intent);	
+									
+									//shareVideoUsingStream(file, mimeType);
 								}
 								else {
 						          Intent intent = new Intent(Intent.ACTION_VIEW);													
@@ -325,14 +322,15 @@ public class GalleryActivity extends ListActivity {
 									
 									String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 									String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
-									if (fileExtension.equals("mp4")||fileExtension.equals("mkv"))
+									if (fileExtension.equals("mp4")||fileExtension.equals("mkv")||fileExtension.equals("mov"))
 										mimeType = "video/*";
 									if (mimeType == null)
 										mimeType = "application/octet-stream";
 									
 									intent.setDataAndType(uri, mimeType);
 									intent.putExtra(Intent.EXTRA_STREAM, uriExport);
-									intent.putExtra(Intent.EXTRA_SUBJECT, "shared from IOCipher");
+									intent.putExtra(Intent.EXTRA_SUBJECT, exportFile.getName());
+									intent.putExtra(Intent.EXTRA_TITLE, exportFile.getName());
 									
 									try {
 										startActivity(Intent.createChooser(intent, "Share this!"));

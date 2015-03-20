@@ -22,38 +22,17 @@
 
  <item
         android:title="Photo"
+        android:id="@+id/menu_camera"
          android:showAsAction="always"
          >
-         <menu>
- <item android:id="@+id/menu_camera_regular"
-        android:title="Regular"
-         android:showAsAction="always"
-         />            
-          
- <item android:id="@+id/menu_camera_selfie"
-        android:title="Selfie"
-         android:showAsAction="always"
-         />
-             
-         </menu>
+         
      </item>
 
  <item
         android:title="Video"
+        android:id="@+id/menu_video"
          android:showAsAction="always"
          >
-     <menu>
-         <item android:id="@+id/menu_video_jpeg"
-        android:title="Video (JPEG)"
-         android:showAsAction="always"
-         />
-         
-         <item android:id="@+id/menu_video_native"
-        android:title="Video (Native)"
-         android:showAsAction="always"
-         />
-         
-     </menu>
      
  </item>
 </menu>

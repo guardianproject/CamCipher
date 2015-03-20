@@ -1,5 +1,6 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera.viewer;
 
+import info.guardianproject.iocipher.camera.R;
 import android.app.Activity;
 import android.media.AudioManager;
 import android.media.MediaPlayer;

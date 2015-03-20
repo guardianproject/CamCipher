@@ -1,38 +1,36 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera;
 
 import info.guardianproject.iocipher.File;
-import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
-import info.guardianproject.iocipherexample.encoders.ImageToH264MP4Encoder;
+import info.guardianproject.iocipher.camera.encoders.ImageToMJPEGMOVMuxer;
+import info.guardianproject.iocipher.camera.io.IOCipherFileChannelWrapper;
+import info.guardianproject.iocipher.camera.R;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.scale.BitmapUtil;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.ToggleButton;
 
-public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
+public class VideoCameraActivity extends CameraBaseActivity {
 	
 	private final static String LOG = "VideoJPEGRecorder";
 	
@@ -44,22 +42,21 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 	private int mLastWidth = -1;
 	private int mLastHeight = -1;
 	private int mPreviewFormat = -1;
-	private int mTimeScale = 15;
 	
-	private int mJpegQuality = 100;
+	private int mJpegQuality = 70;
 	
 	private int mFramesTotal = 0;
+	
+	private int mAudioSampleRate = 11025;
 	
 	private boolean mPreCompressFrames = true;
 	OutputStream outputStreamAudio;
 	 info.guardianproject.iocipher.File fileAudio;
-	  
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
-
-		mJpegQuality = 80;
 	}
 
 	@Override
@@ -67,39 +64,46 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 	{
 		return R.layout.camera;
 	}
-	
-	@Override
-	protected int getCameraDirection() {
-		return CameraInfo.CAMERA_FACING_BACK;
-	}
+
 	
 	@Override
 	public void onClick(View view) {
-		if (!mIsRecording)
+		
+		if (view == button)
 		{
-			
-			//start capture
-			mFrameQ = new ArrayDeque<byte[]>();
-			progress.setText("Recording...");
-			mFramesTotal = 0;
-
-			
-			File fileOut = processFrames();
-			startAudioRecord(fileOut.getAbsolutePath()+".pcm");
+			if (!mIsRecording)
+			{
+				
+				//start capture
+				mIsRecording = true;
+				
+				mFrameQ = new ArrayDeque<byte[]>();
+				progress.setText("[REC]");
+				mFramesTotal = 0;
+	
+				File fileOut = processFrames();
+				startAudioRecord(fileOut.getAbsolutePath()+".pcm");
+				
+			}
+			else
+			{
+				mIsRecording = false;
+				progress.setText("");
+			}
+		}
+		else if (view == buttonSelfieSwitch)
+		{
+			mIsSelfie = !mIsSelfie;
+			releaseCamera();
+			initCamera();
 			
 		}
-		else
-		{
-
-			progress.setText("");
-		}
-		 
-		 mIsRecording = !mIsRecording;
+		
+		
 	}
 
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
-		super.onPreviewFrame(data, camera);
 		
 		if (mIsRecording && mFrameQ != null)
 		{
@@ -136,11 +140,13 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 
 	private File processFrames ()
 	{
-		String fileName = "video" + new java.util.Date().getTime() + ".mp4";
+		String fileName = "video" + new java.util.Date().getTime() + ".mov";
 		info.guardianproject.iocipher.File fileOut = new info.guardianproject.iocipher.File(mFileBasePath,fileName);
 		new Encoder(fileOut).start();
 		return fileOut;
 	}
+	
+	ImageToMJPEGMOVMuxer muxer;
 	
 	private class Encoder extends Thread {
 		private static final String TAG = "ENCODER";
@@ -160,44 +166,25 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 				
 				FileOutputStream fos = new info.guardianproject.iocipher.FileOutputStream(fileOut);
 				SeekableByteChannel sbc = new IOCipherFileChannelWrapper(fos.getChannel());
+		        //int sampleRate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
+
+				org.jcodec.common.AudioFormat af = new org.jcodec.common.AudioFormat(org.jcodec.common.AudioFormat.MONO_S16_LE(mAudioSampleRate));
 				
-				//ImageToMP4Muxer mx = new ImageToMP4Muxer(sbc);
-				//YUVtoWebmMuxer mx = new YUVtoWebmMuxer(sbc,mLastWidth,mLastHeight);
-				//ImageToVP8Encoder mx = new ImageToVP8Encoder(sbc);
-				org.jcodec.common.AudioFormat af = new org.jcodec.common.AudioFormat(org.jcodec.common.AudioFormat.MONO_S16_LE(22050));
-				
-				ImageToH264MP4Encoder mx = new ImageToH264MP4Encoder(sbc,af);
+				muxer = new ImageToMJPEGMOVMuxer(sbc,af);
 				
 				while (mIsRecording || (!mFrameQ.isEmpty()))
 				{
 					if (mFrameQ.peek() != null)
 					{
 						byte[] bytes = mFrameQ.pop();
-					
-						 Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0,bytes.length);
 						 
-					//	se.encodeImage(mLastWidth, mLastHeight,ByteBuffer.wrap(bytes));
-					//	mx.addJPEGFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(bytes));
-					//	mx.encodeNativeFrame(ByteBuffer.wrap(bytes), mLastWidth, mLastHeight, frameIdx++);
-					//	mx.addBitmap(mLastWidth, mLastHeight, bmp, frameIdx);
+						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(bytes));
 						
-						 
-						mx.addFrame(BitmapUtil.fromBitmap(bmp));
-						
-						Message msg = new Message();
-						msg.getData().putInt("frames", mFrameQ.size());
-						h.sendMessage(msg);
 					}
 
 				}
 
-				
-				//FileInputStream fis = new FileInputStream(fileAudio);
-				
-				//mx.addAudio(ByteBuffer.wrap(outputStreamAudio.toByteArray()));
-				
-				
-				mx.finish();
+				muxer.finish();
 				
 			} catch (IOException e) {
 				Log.e(TAG, "IO", e);
@@ -205,42 +192,7 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 
 		}
 		
-		/*
-		public void run ()
-		{
-			SequenceEncoder se = null;
-			try {
-				
-				FileOutputStream fos = new info.guardianproject.iocipher.FileOutputStream(fileOut);
-				se = new SequenceEncoder(new IOCipherFileChannelWrapper(fos.getChannel()),mLastWidth,mLastHeight,mTimeScale);
-				//se = new SequenceEncoder(params[0]);
-				
-				while (mIsRecording || (!mFrameQ.isEmpty()))
-				{
-					if (mFrameQ.peek() != null)
-					{f
-						byte[] bytes = mFrameQ.pop();
-						
-						Bitmap bmp = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
-						
-						for (int i = 0; i < mFrameFreq; i++)
-							se.encodeImage(bmp);
-						
-						Message msg = new Message();
-						msg.getData().putInt("frames", mFrameQ.size());
-						h.sendMessage(msg);
-					}
-
-				}
-				se.finish();
-				
-			} catch (IOException e) {
-				Log.e(TAG, "IO", e);
-			}
-
-		}
-		*/
-
+	
 		
 	}
 	
@@ -277,38 +229,43 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 			 {
 			 
 				fileAudio  = new File(audioPath); 
-				    
+		     //   int sampleRate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
+
 				  try {
 				   
 				   outputStreamAudio = new info.guardianproject.iocipher.FileOutputStream(fileAudio);
 					  
-					  BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStreamAudio);
-					   
-					  DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
-				   
-				   int minBufferSize = AudioRecord.getMinBufferSize(22050, 
-				     AudioFormat.CHANNEL_CONFIGURATION_MONO, 
+					
+				   int minBufferSize = AudioRecord.getMinBufferSize(mAudioSampleRate, 
+				     AudioFormat.CHANNEL_IN_MONO, 
 				     AudioFormat.ENCODING_PCM_16BIT);
 				   
-				   short[] audioData = new short[minBufferSize];
+				   byte[] audioData = new byte[minBufferSize];
 				   
 				   AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
-						   22050,
-				     AudioFormat.CHANNEL_CONFIGURATION_MONO,
+						   mAudioSampleRate,
+				     AudioFormat.CHANNEL_IN_MONO,
 				     AudioFormat.ENCODING_PCM_16BIT,
 				     minBufferSize);
 				   
 				   audioRecord.startRecording();
 				   
 				   while(mIsRecording){
-				    int numberOfShort = audioRecord.read(audioData, 0, minBufferSize);
-				    for(int i = 0; i < numberOfShort; i++){
-				     dataOutputStream.writeShort(audioData[i]);
-				    }
+				    int audioDataBytes = audioRecord.read(audioData, 0, audioData.length);
+				    if (AudioRecord.ERROR_INVALID_OPERATION != audioDataBytes
+		                    && outputStreamAudio != null) {
+		                try {
+		                	outputStreamAudio.write(audioData,0,audioDataBytes);
+		                	
+		                	muxer.addAudio(ByteBuffer.wrap(audioData));
+		                } catch (IOException e) {
+		                    e.printStackTrace();
+		                }
+		            }
 				   }
 				   
 				   audioRecord.stop();
-				   dataOutputStream.close();
+				   outputStreamAudio.close();
 				   
 				  } catch (IOException e) {
 				   e.printStackTrace();
@@ -319,5 +276,7 @@ public class VideoJPEGRecorderActivity extends SurfaceGrabberActivity {
 		 thread.start();
 
 	 }
+	 
+	 
 	
 }

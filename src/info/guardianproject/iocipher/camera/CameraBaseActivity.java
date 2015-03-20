@@ -1,4 +1,6 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera;
+
+import info.guardianproject.iocipher.camera.R;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,7 +15,6 @@ import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -22,11 +23,14 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
-public class SurfaceGrabberActivity extends Activity implements OnClickListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
+public abstract class CameraBaseActivity extends Activity implements OnClickListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
+	
 	Button button;
 	TextView progress;
-
+	ToggleButton buttonSelfieSwitch;
+	
 	SurfaceView view;
 	SurfaceHolder holder;
 	Camera camera;
@@ -41,14 +45,23 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 	int mPreviewWidth = 720;
 	int mPreviewHeight = 480;
 	
+	boolean mIsSelfie = false;
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(getLayout());
 		
+
+		mIsSelfie = getIntent().getBooleanExtra("selfie", false);
+
+		
 		button = (Button) findViewById(R.id.surface_grabber_button);
 		button.setOnClickListener(this);
+		
+		buttonSelfieSwitch = (ToggleButton)findViewById(R.id.tbSelfie);
+		buttonSelfieSwitch.setOnClickListener(this);
 		
 		progress = (TextView) findViewById(R.id.surface_grabber_progress);
 		
@@ -64,10 +77,14 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 		return R.layout.camera;
 	}
 	
-	protected int getCameraDirection()
-	{
-		return CameraInfo.CAMERA_FACING_BACK;
+
+	protected int getCameraDirection() {
+		if (mIsSelfie)
+			return CameraInfo.CAMERA_FACING_FRONT;
+		else
+			return CameraInfo.CAMERA_FACING_BACK;
 	}
+
 	
 	/**
      * Whether or not we can default to "other" direction if our preferred facing camera can't be opened
@@ -82,6 +99,12 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 	@Override
 	public void onResume() {
 		super.onResume();
+		
+		initCamera();
+	}
+	
+	protected void initCamera()
+	{
 
 		if (!tryCreateCamera(getCameraDirection()))
         {
@@ -118,6 +141,7 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 				 params.setPictureFormat(ImageFormat.JPEG); 
 				 params.setPreviewSize(mPreviewWidth, mPreviewHeight);
 
+				 
 				 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_BACK)
 				 {
 					 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
@@ -126,19 +150,57 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 					camera.setParameters(params);
 					
 					camera.setPreviewCallback(this);
+					
+					//Log.d(TAG, "Initialize Callback Buffers: " + BUFFER_SIZE);
 
+					 //int BUFFER_SIZE = (int) (mPreviewWidth * mPreviewHeight * 1.5);
+					 //int NUM_CAMERA_PREVIEW_BUFFERS = 3;
+					 
+			        //camera.setPreviewCallbackWithBuffer(null);
+			        //camera.setPreviewCallbackWithBuffer(this);
+			        //for (int i = 0; i < NUM_CAMERA_PREVIEW_BUFFERS; i++) {
+			         //   camera.addCallbackBuffer(new byte[BUFFER_SIZE]);
+			        //}
+			        
+					if (holder != null)
+						try {
+							camera.setPreviewDisplay(holder);
+							camera.startPreview();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					
 		    	 return true;
 		     }
 	     }
 	     return false;
 	}
 	
+	
 	@Override
 	public void onPause() {
-		if(camera != null)
-			camera.release();
-
+		releaseCamera();
+				
 		super.onPause();
+	}
+	
+	protected void releaseCamera ()
+	{
+		try
+	    {    
+	        // release the camera immediately on pause event   
+			camera.stopPreview(); 
+			camera.setPreviewCallback(null);
+			camera.release();
+			camera = null;
+
+	    }
+	    catch(Exception e)
+	    {
+	        e.printStackTrace();
+	    }
+
 	}
 
 	@Override
@@ -168,7 +230,7 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 	public void surfaceCreated(SurfaceHolder holder) {
 		try {
 			
-			
+			this.holder = holder;
 			camera.setPreviewDisplay(holder);
 			
 		} catch(IOException e) {
@@ -184,6 +246,13 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 		if(view == button && mPreviewing) {
 			mPreviewing = false;
 			camera.takePicture(null, null, this);
+		}
+		else if (view == buttonSelfieSwitch)
+		{
+			mIsSelfie = !mIsSelfie;
+			releaseCamera();
+			initCamera();
+			
 		}
 	}
 
@@ -251,9 +320,4 @@ public class SurfaceGrabberActivity extends Activity implements OnClickListener,
 	     return result;
 	}
 
-	@Override
-	public void onPreviewFrame(byte[] data, Camera camera) {
-		// TODO Auto-generated method stub
-		
-	}
 }

@@ -1,4 +1,4 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera.io;
 
 
 import info.guardianproject.iocipher.IOCipherFileChannel;

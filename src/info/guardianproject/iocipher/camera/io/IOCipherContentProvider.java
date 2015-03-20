@@ -1,4 +1,4 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera.io;
 
 // inspired by https://github.com/commonsguy/cw-omnibus/tree/master/ContentProvider/Pipe
 

@@ -1,4 +1,4 @@
-package info.guardianproject.iocipherexample;
+package info.guardianproject.iocipher.camera.viewer;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
