@@ -24,7 +24,7 @@ import android.webkit.MimeTypeMap;
 public class IOCipherContentProvider extends ContentProvider {
 	public static final String TAG = "IOCipherContentProvider";
 	public static final Uri FILES_URI = Uri
-			.parse("content://info.guardianproject.iocipherexample/");
+			.parse("content://info.guardianproject.iocipher.camera/");
 	private MimeTypeMap mimeTypeMap;
 
 	@Override
@@ -50,7 +50,7 @@ public class IOCipherContentProvider extends ContentProvider {
 		
 		try {
 			File fileShare = new File(path);
-			Log.d(TAG,"found file: " + fileShare.getAbsolutePath() + " size=" + fileShare.length());
+		//	Log.d(TAG,"found file: " + fileShare.getAbsolutePath() + " size=" + fileShare.length());
 			pipe = ParcelFileDescriptor.createPipe();			
 			in = new FileInputStream(fileShare);
 			new PipeFeederThread(in,

@@ -57,7 +57,7 @@
         
         <provider
             android:name="info.guardianproject.iocipher.camera.io.IOCipherContentProvider"
-            android:authorities="info.guardianproject.iocipherexample"
+            android:authorities="info.guardianproject.iocipher.camera"
             android:exported="true"
             android:multiprocess="true"
             android:syncable="false"            
