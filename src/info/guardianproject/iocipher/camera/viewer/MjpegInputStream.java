@@ -18,7 +18,7 @@ public class MjpegInputStream extends DataInputStream {
     private final byte[] EOF_MARKER = { (byte) 0xFF, (byte) 0xD9 };
     private final String CONTENT_LENGTH = "Content-Length";
     private final static int HEADER_MAX_LENGTH = 512;
-    private final static int FRAME_MAX_LENGTH = 300000 + HEADER_MAX_LENGTH;
+    private final static int FRAME_MAX_LENGTH = 700000 + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
 
     public MjpegInputStream(InputStream in) {

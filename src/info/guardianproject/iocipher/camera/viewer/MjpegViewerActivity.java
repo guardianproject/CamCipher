@@ -40,19 +40,17 @@ public class MjpegViewerActivity extends Activity {
 
 	        mv.setDisplayMode(MjpegView.SIZE_BEST_FIT);
 	     //   mv.showFps(true);
-	        
-			mv.setSource(new MjpegInputStream(new FileInputStream(ioCipherVideoPath)));
 
 			File fileAudio = new File(ioCipherAudioPath);
 			if (fileAudio.exists())
 			{
+				initAudio(ioCipherAudioPath);
 				new Thread ()
 				{
 					public void run ()
 					{
-						try {
-							Thread.sleep(500);
-							playAudio(ioCipherAudioPath);
+						try {							
+							playAudio();
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -60,6 +58,9 @@ public class MjpegViewerActivity extends Activity {
 					}
 				}.start();
 			}
+			mv.setSource(new MjpegInputStream(new FileInputStream(ioCipherVideoPath)));
+	        
+
 		        
 	    	} 
         catch (Exception e) {
@@ -68,26 +69,32 @@ public class MjpegViewerActivity extends Activity {
 		}
     }
     
-    public boolean playAudio(String vfsPath) throws IOException {
+    InputStream isAudio = null;
+    
+    public void initAudio(String vfsPath) throws IOException {
 
-        int i = 0;
-        byte[] music = null;
+        
         int sampleRate = 11025;// AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
 
         int minBufferSize = AudioTrack.getMinBufferSize(sampleRate,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)*8;
         
-        InputStream is = new BufferedInputStream(new FileInputStream(vfsPath));
+        isAudio = new BufferedInputStream(new FileInputStream(vfsPath));
 
         at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
             AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
             minBufferSize, AudioTrack.MODE_STREAM);
-
+    }
+    
+    public void playAudio () throws IOException
+    {
         try{
-            music = new byte[512];
+        	byte[] music = null;
+        	music = new byte[512];
             at.play();
 
-            while((i = is.read(music)) != -1)
+            int i = 0;
+            while((i = isAudio.read(music)) != -1)
                 at.write(music, 0, i);
 
         } catch (IOException e) {
@@ -96,9 +103,8 @@ public class MjpegViewerActivity extends Activity {
 
         at.stop();
         at.release();
-        is.close();
+        isAudio.close();
         at = null;
-        return true;
     }
 
     public void onPause() {

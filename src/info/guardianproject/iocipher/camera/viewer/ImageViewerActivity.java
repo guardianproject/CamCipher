@@ -35,7 +35,19 @@ public class ImageViewerActivity extends Activity {
 			try
 			{
 				File file = new File(intent.getExtras().getString("vfs"));
-				Bitmap bmp = BitmapFactory.decodeStream(new FileInputStream(file));
+				Bitmap bmp = null;
+				
+				BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inJustDecodeBounds = true;
+				 BitmapFactory.decodeStream(new FileInputStream(file),null,options);
+				int imageHeight = options.outHeight;
+				int imageWidth = options.outWidth;
+				String imageType = options.outMimeType;
+				
+				options.inJustDecodeBounds = false;
+				options.inSampleSize = 2;
+				bmp =  BitmapFactory.decodeStream(new FileInputStream(file),null,options);
+				
 				iv.setImageBitmap(bmp);
 			}
 			catch (Exception e)

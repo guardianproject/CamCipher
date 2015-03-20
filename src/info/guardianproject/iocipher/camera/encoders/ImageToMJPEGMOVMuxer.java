@@ -37,7 +37,7 @@ public class ImageToMJPEGMOVMuxer {
     private String imageType = "jpeg "; //or "png ";
     private AudioFormat af = null;
     
-    private int timeScale = 24;
+    private int timeScale = 20;
     
     public ImageToMJPEGMOVMuxer(SeekableByteChannel ch, AudioFormat af) throws IOException {
         this.ch = ch;
@@ -48,24 +48,26 @@ public class ImageToMJPEGMOVMuxer {
 
         // Add video track to muxer
         videoTrack = muxer.addTrack(TrackType.VIDEO, timeScale);
-        videoTrack.setTgtChunkDuration(new Rational(2, 1), Unit.SEC);
+    //    videoTrack.setTgtChunkDuration(new Rational(2, 1), Unit.SEC);
         
        if (af != null)
         	audioTrack = muxer.addPCMAudioTrack(af);
 
-
     }
 
     
-    public void addFrame(int width, int height, ByteBuffer buff) throws IOException {
+    public void addFrame(int width, int height, ByteBuffer buff, int timeScaleFPS) throws IOException {
         if (size == null) {
             size = new Size(width,height);            
-            videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry(imageType, size, "JCodec"));       
+            videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry(imageType, size, "JCodec"));
+           
+            if (af != null)
+            	audioTrack.addSampleEntry(MP4Muxer.audioSampleEntry(af));	            
         }
         
         // Add packet to video track
      
-        videoTrack.addFrame(new MP4Packet(buff, frameNo, timeScale, 1, frameNo, true, null, frameNo, 0));
+        videoTrack.addFrame(new MP4Packet(buff, frameNo, timeScaleFPS, 1, frameNo, true, null, frameNo, 0));
 
         frameNo++;
     }

@@ -9,7 +9,6 @@ import info.guardianproject.iocipher.camera.viewer.ImageViewerActivity;
 import info.guardianproject.iocipher.camera.viewer.MjpegViewerActivity;
 import info.guardianproject.iocipher.camera.viewer.StreamOverHttp;
 import info.guardianproject.iocipher.camera.viewer.VideoViewerActivity;
-import info.guardianproject.iocipher.camera.R;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -203,7 +203,7 @@ public class GalleryActivity extends ListActivity {
 			path.add(file.getParent()); // back one level
 		}
 
-		for (int i = 0; i < files.length; i++) {
+		for (int i = files.length-1; i >= 0; i--) {
 
 			File fileItem = files[i];
 			path.add(fileItem.getPath());
@@ -439,8 +439,9 @@ public class GalleryActivity extends ListActivity {
 			//Date dateMod = new Date(f.lastModified());
 			//labelText.append("Modified: " ).append(dateMod.toGMTString()).append('\n');
 			
-			labelText.append("Size: ").append(f.length());
-					
+			labelText.append("Size: ").append(f.length()).append(' ');
+			labelText.append("Time: ").append(new Date(f.lastModified()).toLocaleString());
+			
 			label.setText(labelText.toString());
 			
 			if (f.isDirectory()) {
@@ -487,12 +488,5 @@ public class GalleryActivity extends ListActivity {
 	    return Bitmap.createScaledBitmap(b, bounds.outWidth/THUMB_DIV, bounds.outWidth/THUMB_DIV, false);
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-	
-		if (requestCode == 1)
-			getFileList(root);
-	}
-	
 	
 }

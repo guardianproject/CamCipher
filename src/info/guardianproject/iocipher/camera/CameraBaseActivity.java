@@ -1,12 +1,11 @@
 package info.guardianproject.iocipher.camera;
 
-import info.guardianproject.iocipher.camera.R;
-
 import java.io.IOException;
 import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -40,10 +39,9 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 
 	private final static String LOG = "Camera";
 
-	int mRotation = -1;
-	
 	int mPreviewWidth = 720;
 	int mPreviewHeight = 480;
+	int mRotation = 0;
 	
 	boolean mIsSelfie = false;
 	
@@ -118,7 +116,6 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		if(camera == null)
 			finish();
 		
-		mRotation = setCameraDisplayOrientation();
 	}
 
 	private int getOtherDirection(int facing)
@@ -138,13 +135,34 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		    	 cameraInfo = info;
 
 		    	 Camera.Parameters params = camera.getParameters();
-				 params.setPictureFormat(ImageFormat.JPEG); 
-				 params.setPreviewSize(mPreviewWidth, mPreviewHeight);
-
+				 params.setPictureFormat(ImageFormat.JPEG);
+				 
+				 mRotation = setCameraDisplayOrientation(this,nCam,camera);
+				 
+				 
+				 List<Camera.Size> supportedPreviewSizes =  camera.getParameters().getSupportedPreviewSizes();
+				 List<Camera.Size> supportedPictureSize = camera.getParameters().getSupportedPictureSizes();
+				 
+				 int previewQuality = 4;
+				 
+				 params.setPreviewSize(supportedPreviewSizes.get(previewQuality).width, supportedPreviewSizes.get(previewQuality).height);
+				 params.setPictureSize(supportedPictureSize.get(1).width, supportedPictureSize.get(1).height);
+				 
+				 mPreviewWidth = supportedPreviewSizes.get(previewQuality).width;
+				 mPreviewHeight = supportedPreviewSizes.get(previewQuality).height;
 				 
 				 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_BACK)
 				 {
 					 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+					 
+					 if (mRotation > 0)
+						 params.setRotation(mRotation);
+
+				 }
+				 else
+				 {
+					 if (mRotation > 0)
+						 params.setRotation(360-mRotation);
 				 }
 									
 					camera.setParameters(params);
@@ -287,20 +305,16 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		}
 	}
 	
-	public int setCameraDisplayOrientation() 
-	{        
-	     if (camera == null || cameraInfo == null)
-	     {
-	         return -1;      
-	     }
-
-	     WindowManager winManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-	     int rotation = winManager.getDefaultDisplay().getRotation();
-
+	
+	public static int setCameraDisplayOrientation(Activity activity,
+	         int cameraId, android.hardware.Camera camera) {
+	     android.hardware.Camera.CameraInfo info =
+	             new android.hardware.Camera.CameraInfo();
+	     android.hardware.Camera.getCameraInfo(cameraId, info);
+	     int rotation = activity.getWindowManager().getDefaultDisplay()
+	             .getRotation();
 	     int degrees = 0;
-
-	     switch (rotation) 
-	     {
+	     switch (rotation) {
 	         case Surface.ROTATION_0: degrees = 0; break;
 	         case Surface.ROTATION_90: degrees = 90; break;
 	         case Surface.ROTATION_180: degrees = 180; break;
@@ -308,16 +322,14 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 	     }
 
 	     int result;
-	     if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) 
-	     {
-	         result = (cameraInfo.orientation + degrees) % 360;
+	     if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+	         result = (info.orientation + degrees) % 360;
 	         result = (360 - result) % 360;  // compensate the mirror
 	     } else {  // back-facing
-	         result = (cameraInfo.orientation - degrees + 360) % 360;
+	         result = (info.orientation - degrees + 360) % 360;
 	     }
 	     camera.setDisplayOrientation(result);
 	     
 	     return result;
-	}
-
+	 }
 }

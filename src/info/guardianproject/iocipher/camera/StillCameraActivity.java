@@ -24,7 +24,9 @@ public class StillCameraActivity extends CameraBaseActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
-
+		
+		mPreviewWidth = 1280;
+		mPreviewHeight = 720;
 		
 	}
 
@@ -47,6 +49,14 @@ public class StillCameraActivity extends CameraBaseActivity {
 			out.close();
 
 			setResult(Activity.RESULT_OK, new Intent().putExtra("path", fileSecurePicture.getAbsolutePath()));
+			
+			view.postDelayed(new Runnable()
+			{
+				@Override
+				public void run() {
+					resumePreview();
+				}
+			},500);
 
 		} catch (Exception e) {
 			e.printStackTrace();
