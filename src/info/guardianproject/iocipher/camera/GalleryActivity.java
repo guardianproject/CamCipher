@@ -1,5 +1,6 @@
 package info.guardianproject.iocipher.camera;
 
+import info.guardianproject.cacheword.ICacheWordSubscriber;
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
@@ -53,7 +54,6 @@ public class GalleryActivity extends ListActivity {
 	private String[] items;
 	private java.io.File dbFile;
 	private String root = "/";
-	private String mPassword = "this is just a test";
 	/** Called when the activity is first created. */
 
 	@Override
@@ -75,23 +75,21 @@ public class GalleryActivity extends ListActivity {
 
 		setContentView(R.layout.main);
 		fileInfo = (TextView) findViewById(R.id.info);
-		dbFile = new java.io.File(getDir("vfs", MODE_PRIVATE),"gallery.db");
-		dbFile.getParentFile().mkdirs();
-		
-		if (!dbFile.exists())
-			VirtualFileSystem.get().createNewContainer(dbFile.getAbsolutePath(), mPassword);
 	}
 
 	protected void onResume() {
 		super.onResume();
 		
-		if (!VirtualFileSystem.get().isMounted())
+		if (!StorageManager.isStorageMounted())
 		{
-			// TODO don't use a hard-coded password! prompt for the password
-			VirtualFileSystem.get().mount(dbFile.getAbsolutePath(),mPassword);
+			Intent intent = new Intent(this,LockScreenActivity.class);
+			startActivity(intent);
+			finish();
 		}
-		
-		getFileList(root);
+		else
+		{
+			getFileList(root);
+		}
 		
 	}
 
@@ -451,6 +449,7 @@ public class GalleryActivity extends ListActivity {
 	    
 	    return Bitmap.createScaledBitmap(b, bounds.outWidth/THUMB_DIV, bounds.outWidth/THUMB_DIV, false);
 	}
+
 
 	
 }

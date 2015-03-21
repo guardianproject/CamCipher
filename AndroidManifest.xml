@@ -35,7 +35,10 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
-        
+        <activity
+            android:name="info.guardianproject.iocipher.camera.LockScreenActivity"
+             android:theme="@android:style/Theme.NoTitleBar"
+           />
          <activity
             android:name="info.guardianproject.iocipher.camera.StillCameraActivity"
             android:label="Secure Selfie"
@@ -62,6 +65,11 @@
             android:multiprocess="true"
             android:syncable="false"            
              />
+        
+         <service
+            android:name=".CacheWordService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>
