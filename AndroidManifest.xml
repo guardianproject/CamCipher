@@ -67,7 +67,7 @@
              />
         
          <service
-            android:name=".CacheWordService"
+            android:name="info.guardianproject.cacheword.CacheWordService"
             android:enabled="true"
             android:exported="false" />
     </application>

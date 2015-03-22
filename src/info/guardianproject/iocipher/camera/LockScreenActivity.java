@@ -44,9 +44,7 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lock_screen);
-        mCacheWord = new CacheWordHandler(this, this);
-        mCacheWord.connectToService();
-        
+       
         mViewCreatePassphrase = findViewById(R.id.llCreatePassphrase);
         mViewEnterPassphrase = findViewById(R.id.llEnterPassphrase);
 
@@ -58,6 +56,9 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
         LinearLayout flipView2 = (LinearLayout) findViewById(R.id.flipView2);
 
         mSlider = new TwoViewSlider(vf, flipView1, flipView2, mNewPassphrase, mConfirmNewPassphrase);
+        
+        mCacheWord = new CacheWordHandler(this, this);
+        mCacheWord.connectToService(); 
     }
 
     @Override
@@ -87,9 +88,8 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
 
     	StorageManager.mountStorage(this, null, mCacheWord.getEncryptionKey());
     	
-    	Intent intent = (Intent) getIntent().getParcelableExtra("originalIntent");
+    	Intent intent = new Intent(this,GalleryActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
         startActivity(intent);
         finish();
         overridePendingTransition(0, 0);
@@ -178,7 +178,7 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
                     mSlider.showNewPasswordField();
                 } else {
                     try {
-                        mCacheWord.setPassphrase(mNewPassphrase.getText().toString().toCharArray());
+                        mCacheWord.setPassphrase(mNewPassphrase.getText().toString().toCharArray());                        
                     } catch (GeneralSecurityException e) {
                         Log.e(TAG, "Cacheword pass initialization failed: " + e.getMessage());
                     }
