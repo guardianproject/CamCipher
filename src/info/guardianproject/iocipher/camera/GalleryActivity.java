@@ -165,11 +165,10 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	        	setResult(resultCode,data);
 	        	finish();
 	        }
-	        else
-	        {
-	        	getFileList(root);
-	        }
+	        
         }
+        
+        getFileList(root);
         
 	}
 
@@ -537,7 +536,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 					if (b != null)
 						holder.icon.setImageBitmap(b);
 					else
-						holder.icon.setImageResource(R.drawable.text);//placeholder while its loading
+						holder.icon.setImageResource(R.drawable.jpeg);//placeholder while its loading
 				}
 				catch (Exception e)
 				{
@@ -547,11 +546,11 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			}			
 			else if (mimeType.startsWith("audio")||f.getName().endsWith(".pcm")||f.getName().endsWith(".aac"))
 			{
-				holder.icon.setImageResource(R.drawable.audioclip);
+				holder.icon.setImageResource(R.drawable.audio);
 			}
 			else if (mimeType.startsWith("video")||f.getName().endsWith(".mp4")||f.getName().endsWith(".mov"))
 			{
-				holder.icon.setImageResource(R.drawable.videoclip);
+				holder.icon.setImageResource(R.drawable.mp4);
 			}
 			else
 			{

@@ -51,8 +51,7 @@ public class StillCameraActivity extends CameraBaseActivity {
 			out.flush();
 			out.close();
 
-			Intent intentResult = new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileSecurePicture.getAbsolutePath());
-			
+			Intent intentResult = new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileSecurePicture.getAbsolutePath());			
 			setResult(Activity.RESULT_OK, intentResult);
 			
 			if (isRequest)
