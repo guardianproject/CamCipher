@@ -4,18 +4,18 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:padding="20dp"
-    android:orientation="vertical" >
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginBottom="40dp"
-            android:gravity="center"
-            android:text="@string/app_name"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textColor="#FFFFFF" />
+    android:orientation="vertical"
+    android:background="#aaaaaa"
+     >
 
+    
+    <ImageView        
+        android:src="@drawable/ic_launcher"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        />
+    
+    
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
@@ -35,7 +35,9 @@
                         android:id="@+id/flipView1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_margin="5dp" >
+                        android:layout_margin="5dp"
+                      
+                         >
 
                         <EditText
                             android:id="@+id/editNewPassphrase"
@@ -44,7 +46,12 @@
                             android:layout_weight="1"
                             android:ems="10"
                             android:hint="@string/lock_screen_passphrase_not_set_enter"
-                            android:inputType="textPassword" />
+                            android:inputType="textPassword"
+                            android:background="#cccccc"
+                            android:gravity="center" 
+						    android:layout_gravity="center"
+						    android:padding="6dp"
+                             />
                     </LinearLayout>
 
                     <LinearLayout
@@ -60,17 +67,25 @@
                             android:layout_weight="1"
                             android:ems="10"
                             android:hint="@string/lock_screen_passphrase_not_set_confirm"
-                            android:inputType="textPassword" />
+                            android:inputType="textPassword"
+                            android:background="#cccccc"                            
+						    android:gravity="center" 
+						    android:layout_gravity="center"
+						    android:padding="6dp"
+						    
+                             />
                     </LinearLayout>
                 </ViewFlipper>
 
+                <!-- 
                 <Button
+                    
                     android:id="@+id/btnCreate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="15dp"
                     android:text="@string/lock_screen_create_passphrase" />
-
+ -->
             </LinearLayout>
 
             <LinearLayout
@@ -93,19 +108,24 @@
                         android:ems="10"
                         android:hint="@string/lock_screen_passphrase_hint"
                         android:imeOptions="actionGo"
-                        android:inputType="textPassword" >
+                        android:inputType="textPassword"
+                        android:background="#cccccc"                            
+						    android:gravity="center" 
+						    android:layout_gravity="center"
+						android:padding="6dp"
+                         >
 
                         <requestFocus />
                     </EditText>
                 </LinearLayout>
-
+<!-- 
                 <Button
                     android:id="@+id/btnOpen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="15dp"
                     android:text="@string/lock_screen_open" />
-
+ -->
             </LinearLayout>
         </FrameLayout>
 

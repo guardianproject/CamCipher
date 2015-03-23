@@ -25,27 +25,29 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:background="#34000000"
         android:orientation="vertical"
-        android:gravity="center"
+        android:gravity="top"
         android:layout_alignParentRight="true"
-        android:padding="20dp" >
+        android:padding="6dp"
+       >
 
         <Button
             android:id="@+id/surface_grabber_button"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center"
-            android:background="@drawable/camera_button_selector" />
+            android:background="@drawable/ic_action_video"
+            
+             />
         
-        	<ToggleButton 
+ 
+        	<Button 
 		    android:id="@+id/tbSelfie"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:textOn="Selfie"
-		    android:layout_margin="10sp"
-		    android:textOff="Back"
-		    android:onClick="onToggleClicked"/>
+		    android:layout_width="48dp"
+            android:layout_height="48dp"	    
+		    android:background="@drawable/ic_action_switch_camera"
+		    
+		    />
 
     </LinearLayout>
 
