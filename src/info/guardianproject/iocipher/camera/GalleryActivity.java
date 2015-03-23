@@ -27,8 +27,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,6 +45,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static String TAG = "FileBrowser";
@@ -63,6 +64,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static int REQUEST_TAKE_PICTURE = 1000;
 	private final static int REQUEST_TAKE_VIDEO = 1001;
 	
+	private Handler h = new Handler();//for UI event handling
+	
 	 /** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -78,7 +81,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
         mCacheWord = new CacheWordHandler(this, this);
         mCacheWord.connectToService(); 
-
+        mCacheWord.setTimeout(-1);
+        
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		String type = intent.getType();
@@ -152,8 +156,11 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	        if (requestCode == REQUEST_TAKE_PICTURE)
 	        {
 	        	String ioCipherFile = data.getExtras().getString(MediaStore.EXTRA_OUTPUT);
-	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);
-				data.getExtras().putString(MediaStore.EXTRA_OUTPUT, uri.toString());
+	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);	        		        
+				String mimeType = "image/*";				
+				data.setDataAndType(uri, mimeType);
+				data.putExtra(Intent.EXTRA_STREAM, uri);
+	        	
 	        	setResult(resultCode,data);	
 	        	finish();
 	        }
@@ -161,7 +168,10 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	        {
 	        	String ioCipherFile = data.getExtras().getString(MediaStore.EXTRA_OUTPUT);
 	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);
-				data.getExtras().putString(MediaStore.EXTRA_OUTPUT, uri.toString());
+				String mimeType = "video/*";				
+				data.setDataAndType(uri, mimeType);
+				data.putExtra(Intent.EXTRA_STREAM, uri);
+	        	
 	        	setResult(resultCode,data);
 	        	finish();
 	        }
@@ -257,11 +267,14 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
     		{
     			//if storage is mounted, then we should lock it
     			boolean unmounted = StorageManager.unmountStorage();
-    			mCacheWord.lock();
     			
     			if (!unmounted)    			
     			{
-    				//Toast.makeText(this, "Storage is busy... cannot lock yet.",Toast.LENGTH_LONG).show();
+    				Toast.makeText(this, "Storage is busy... cannot lock yet.",Toast.LENGTH_LONG).show();
+    			}
+    			else
+    			{
+    				mCacheWord.lock();
     			}
     		}
         	
@@ -372,12 +385,14 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				if (file.isDirectory()) {
 					if (file.canRead()) {
 						getFileList(path.get(position));
+						return true;
 					} else {
 						//show error
 		
 					}
 				} else {
 					showItemDialog (file);
+					return true;
 				}
 				
 				return false;
@@ -568,12 +583,48 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
 		Bitmap b = mBitCache.get(fileImage.getAbsolutePath());
 		
-		if (b == null)	
-			new BitmapWorkerTask().execute(fileImage);
+		if (b == null)
+			new BitmapWorkerThread(fileImage).start();
+		//	new BitmapWorkerTask().execute(fileImage);
 		
 		return b;
 	}
 	
+	class BitmapWorkerThread extends Thread
+	{
+		private File fileImage;
+		
+		public BitmapWorkerThread (File fileImage)
+		{
+			this.fileImage = fileImage;
+		}
+		
+		public void run ()
+		{
+			BitmapFactory.Options bounds = new BitmapFactory.Options();	    
+			bounds.inSampleSize = 8;	 	    
+			Bitmap b;
+			try {
+				FileInputStream fis = new FileInputStream(fileImage);
+				b = BitmapFactory.decodeStream(fis, null, bounds);
+				fis.close();
+				mBitCache.put(fileImage.getAbsolutePath(), b);
+				
+				h.post(new Runnable()
+				{
+					public void run ()
+					{
+						((IconicList)gridview.getAdapter()).notifyDataSetChanged();
+					}
+				});
+		    
+			} catch (Exception e) {
+				Log.e(TAG,"error decoding bitmap preview",e);
+			}
+		}
+	}
+	
+	/*
 	class BitmapWorkerTask extends AsyncTask<File, Void, Bitmap> {
 
 	    // Decode image in background.
@@ -604,7 +655,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	    	((IconicList)gridview.getAdapter()).notifyDataSetChanged();
 			
 	    }
-	}
+	}*/
 
 
 	
