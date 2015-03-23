@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -42,6 +44,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static String TAG = "FileBrowser";
@@ -105,7 +108,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 		if (StorageManager.isStorageMounted())
 		{
 			//if storage is mounted, then we should lock it
-			StorageManager.unmountStorage();
+			boolean unmounted = StorageManager.unmountStorage();
 		}
 		
 		goToLockScreen ();
@@ -200,7 +203,21 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
         	
         case R.id.menu_lock:
         	
-        	mCacheWord.lock();
+        	if (StorageManager.isStorageMounted())
+    		{
+    			//if storage is mounted, then we should lock it
+    			boolean unmounted = StorageManager.unmountStorage();
+    		
+    			if (unmounted)
+    			{
+    				mCacheWord.lock();
+    			}
+    			else
+    			{
+    				Toast.makeText(this, "Storage is busy... cannot lock yet.",Toast.LENGTH_LONG).show();
+    			}
+    		}
+        	
         	
         	return true;
         }	
@@ -402,10 +419,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				  
 				  startActivity(intent);	
 				
-				//shareVideoUsingStream(file, mimeType);
 			}
 			else {
-				//Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
 			  Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
 				
 	          Intent intent = new Intent(Intent.ACTION_VIEW);													
@@ -425,12 +440,10 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 		  
 		}
 	
-	class IconicList extends ArrayAdapter {
+	class IconicList extends ArrayAdapter<Object> {
 
 		public IconicList() {
 			super(GalleryActivity.this, R.layout.row, items);
-
-			// TODO Auto-generated constructor stub
 		}
 
 		public View getView(int position, View convertView, ViewGroup parent) {
@@ -472,7 +485,11 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				
 				try
 				{
-					holder.icon.setImageBitmap(getPreview(f));
+					Bitmap b = getPreview(f);
+					if (b != null)
+						holder.icon.setImageBitmap(b);
+					else
+						holder.icon.setImageResource(R.drawable.text);//placeholder while its loading
 				}
 				catch (Exception e)
 				{
@@ -504,15 +521,41 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
 		Bitmap b = mBitCache.get(fileImage.getAbsolutePath());
 		
-		if (b == null)
-		{
-			BitmapFactory.Options bounds = new BitmapFactory.Options();	    
-			bounds.inSampleSize = 8;	 	    
-			b = BitmapFactory.decodeStream(new FileInputStream(fileImage), null, bounds);
-			mBitCache.put(fileImage.getAbsolutePath(), b);
-		}
+		if (b == null)	
+			new BitmapWorkerTask().execute(fileImage);
 		
 		return b;
+	}
+	
+	class BitmapWorkerTask extends AsyncTask<File, Void, Bitmap> {
+
+	    // Decode image in background.
+	    @Override
+	    protected Bitmap doInBackground(File... fileImage) {
+	        
+	        BitmapFactory.Options bounds = new BitmapFactory.Options();	    
+			bounds.inSampleSize = 8;	 	    
+			Bitmap b;
+			try {
+				FileInputStream fis = new FileInputStream(fileImage[0]);
+				b = BitmapFactory.decodeStream(fis, null, bounds);
+				fis.close();
+				mBitCache.put(fileImage[0].getAbsolutePath(), b);
+				return b;
+			} catch (Exception e) {
+				Log.e(TAG,"error decoding bitmap preview",e);
+			}
+			
+	        return null;
+	        
+	    }
+
+	    // Once complete, see if ImageView is still around and set bitmap.
+	    @Override
+	    protected void onPostExecute(Bitmap bitmap) {	    	
+	    	((IconicList)gridview.getAdapter()).notifyDataSetChanged();
+			
+	    }
 	}
 
 

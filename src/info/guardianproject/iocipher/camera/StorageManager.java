@@ -1,14 +1,13 @@
 package info.guardianproject.iocipher.camera;
 
-import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.VirtualFileSystem;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import android.content.Context;
 import android.os.Environment;
+import android.util.Log;
 
 public class StorageManager {
 
@@ -19,9 +18,18 @@ public class StorageManager {
 		return VirtualFileSystem.get().isMounted();
 	}
 	
-	public static void unmountStorage ()
+	public static boolean unmountStorage ()
 	{
-		VirtualFileSystem.get().unmount();
+		try
+		{
+			VirtualFileSystem.get().unmount();
+			return true;
+		}
+		catch (IllegalStateException ise)
+		{
+			Log.d("IOCipher","error unmounting - still active?",ise);
+			return false;
+		}
 	}
 	
 	public static boolean mountStorage (Context context, String storagePath, byte[] passphrase)
