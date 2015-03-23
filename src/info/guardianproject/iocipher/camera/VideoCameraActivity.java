@@ -20,26 +20,15 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
+import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-
-
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.AudioTrack;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
-import android.media.MediaRecorder;
-import android.media.MediaRecorder.AudioSource;
-import android.os.Build;
-import android.util.Log;
 
 public class VideoCameraActivity extends CameraBaseActivity {
 	
@@ -54,7 +43,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private int mLastHeight = -1;
 	private int mPreviewFormat = -1;
 	
-	private int mJpegQuality = 70; //70 is the quality!
+	private int mJpegQuality = 50; //70 is the quality!
 	int mPreviewWidth = 720; //defualt width
 	int mPreviewHeight = 480; //default height "480p"
 	
@@ -109,9 +98,10 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				try {
 					mIsRecording = true;
 					
-					initAudio(fileOut.getAbsolutePath()+".aac");
-					
-					//initAudio(fileOut.getAbsolutePath()+".pcm");
+					if (useAAC)
+						initAudio(fileOut.getAbsolutePath()+".aac");
+					else
+						initAudio(fileOut.getAbsolutePath()+".pcm");
 					
 					new Encoder(fileOut).start();
 					//start capture
@@ -308,7 +298,9 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			else if (msg.what == 1)
 			{
 				mIsRecording = false; //stop recording
-				aac.stopRecording();
+				
+				if (aac != null)
+					aac.stopRecording();
 			}
 		}
 		
