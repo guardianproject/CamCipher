@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -19,49 +17,56 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 public abstract class CameraBaseActivity extends Activity implements OnClickListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
 	
 	Button button;
 	TextView progress;
-	ToggleButton buttonSelfieSwitch;
+	
+	Button buttonSelfie;
+	boolean mIsSelfie = false;
 	
 	SurfaceView view;
 	SurfaceHolder holder;
 	Camera camera;
 	CameraInfo cameraInfo;
 	
-	private boolean mPreviewing;
+	protected boolean mPreviewing;
 
 	private final static String LOG = "Camera";
 
-	int mPreviewWidth = 720;
-	int mPreviewHeight = 480;
-	int mRotation = 0;
-	private static final int BUFFER_COUNT = 60;
+	protected int mRotation = 0;
 
-	boolean mIsSelfie = false;
-	
-	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		// This example uses decor view, but you can use any visible view.
+		View decorView = getWindow().getDecorView();
+		int uiOptions = View.SYSTEM_UI_FLAG_LOW_PROFILE;
+		decorView.setSystemUiVisibility(uiOptions);
+				
 		setContentView(getLayout());
 		
-
 		mIsSelfie = getIntent().getBooleanExtra("selfie", false);
 
-		
 		button = (Button) findViewById(R.id.surface_grabber_button);
 		button.setOnClickListener(this);
 		
-		buttonSelfieSwitch = (ToggleButton)findViewById(R.id.tbSelfie);
-		buttonSelfieSwitch.setOnClickListener(this);
+		buttonSelfie = (Button)findViewById(R.id.tbSelfie);
+		buttonSelfie.setOnClickListener(new OnClickListener()
+		{
+
+			@Override
+			public void onClick(View v) {
+				toggleCamera();
+				
+			}
+			
+		});
 		
 		progress = (TextView) findViewById(R.id.surface_grabber_progress);
 		
@@ -69,6 +74,8 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		holder = view.getHolder();
 		holder.addCallback(this);
 		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		
+		view.setOnClickListener(this);
 				
 	}
 
@@ -150,8 +157,8 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 				 params.setPreviewSize(supportedPreviewSizes.get(previewQuality).width, supportedPreviewSizes.get(previewQuality).height);
 				 params.setPictureSize(supportedPictureSize.get(1).width, supportedPictureSize.get(1).height);
 				 
-				 mPreviewWidth = supportedPreviewSizes.get(previewQuality).width;
-				 mPreviewHeight = supportedPreviewSizes.get(previewQuality).height;
+				 int previewWidth = supportedPreviewSizes.get(previewQuality).width;
+				 int previewHeight = supportedPreviewSizes.get(previewQuality).height;
 				 
 				 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_BACK)
 				 {
@@ -263,40 +270,31 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 
 	@Override
 	public void onClick(View view) {
-		if(view == button && mPreviewing) {
+		if(mPreviewing) {
 			mPreviewing = false;
 			camera.takePicture(null, null, this);
 		}
-		else if (view == buttonSelfieSwitch)
-		{
-			mIsSelfie = !mIsSelfie;
-			releaseCamera();
-			initCamera();
-			
-		}
 	}
 
+	private void toggleCamera ()
+	{
+		mIsSelfie = !mIsSelfie;
+		releaseCamera();
+		initCamera();
+	}
+	
 	@Override
 	public void onPictureTaken(byte[] data, Camera camera) {
-		
-		try
-		{
-			String pathToData = "";
-			//data, new File(pathToData));
-				
-			view.post(new Runnable()
-			{
-				@Override
-				public void run() {
-					resumePreview();
-				}
-			});
-		}
-		catch (Exception ioe)
-		{
-			Log.e(LOG,"error saving picture to iocipher",ioe);
-		}
+		//do nothing by default
 	}
+	
+
+	@Override
+	public void onPreviewFrame(byte[] data, Camera camera) {
+
+		//do nothing by default
+	}
+
 
 	protected void resumePreview()
 	{

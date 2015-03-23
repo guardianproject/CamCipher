@@ -3,6 +3,7 @@ package info.guardianproject.iocipher.camera.viewer;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
+import info.guardianproject.iocipher.camera.MediaConstants;
 import info.guardianproject.iocipher.camera.encoders.AACHelper;
 
 import java.io.BufferedInputStream;
@@ -27,10 +28,6 @@ public class MjpegViewerActivity extends Activity {
     InputStream isAudio = null;
     AACHelper aac = null;
     boolean useAAC = false;
-
-	private int mAudioSampleRate = 44100;
-	private int mAudioChannels = 1;
-	private int mAudioBitRate = 64;
     
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,16 +102,16 @@ public class MjpegViewerActivity extends Activity {
     	if (useAAC)
     	{
     		aac = new AACHelper();
-    		aac.setDecoder(mAudioSampleRate, mAudioChannels, mAudioBitRate);
+    		aac.setDecoder(MediaConstants.sAudioSampleRate, MediaConstants.sAudioChannels, MediaConstants.sAudioBitRate);
     	}
     	else
     	{
 	
-	        int minBufferSize = AudioTrack.getMinBufferSize(mAudioSampleRate,
-	                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)*8;
+	        int minBufferSize = AudioTrack.getMinBufferSize(MediaConstants.sAudioSampleRate,
+	        		MediaConstants.sChannelConfigOut, AudioFormat.ENCODING_PCM_16BIT)*8;
 	
-	        at = new AudioTrack(AudioManager.STREAM_MUSIC, mAudioSampleRate,
-	            AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
+	        at = new AudioTrack(AudioManager.STREAM_MUSIC, MediaConstants.sAudioSampleRate,
+	        		MediaConstants.sChannelConfigOut, AudioFormat.ENCODING_PCM_16BIT,
 	            minBufferSize, AudioTrack.MODE_STREAM);
     	}
          

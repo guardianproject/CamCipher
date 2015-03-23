@@ -1,10 +1,14 @@
 package info.guardianproject.iocipher.camera;
 
+import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.VirtualFileSystem;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import android.content.Context;
+import android.os.Environment;
 
 public class StorageManager {
 
@@ -46,5 +50,28 @@ public class StorageManager {
 		
 		
 		return true;
+	}
+	
+	public static java.io.File exportToDisk (info.guardianproject.iocipher.File fileIn) throws IOException
+	{
+		java.io.File fileOut = null;
+		
+		fileOut = new java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),fileIn.getName());
+		info.guardianproject.iocipher.FileInputStream fis = new info.guardianproject.iocipher.FileInputStream(fileIn);		
+		java.io.FileOutputStream fos = new java.io.FileOutputStream(fileOut);
+		
+		byte[] b = new byte[4096];
+		int len;
+		while ((len = fis.read(b))!=-1)
+		{
+			fos.write(b, 0, len);
+		}
+		
+		fis.close();
+		fos.flush();
+		fos.close();
+		
+		return fileOut;
+		
 	}
 }

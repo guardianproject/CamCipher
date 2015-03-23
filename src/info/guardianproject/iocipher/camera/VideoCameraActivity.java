@@ -16,6 +16,8 @@ import java.util.ArrayDeque;
 
 import org.jcodec.common.SeekableByteChannel;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
@@ -43,14 +45,6 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private int mLastHeight = -1;
 	private int mPreviewFormat = -1;
 	
-	private int mJpegQuality = 50; //70 is the quality!
-	int mPreviewWidth = 720; //defualt width
-	int mPreviewHeight = 480; //default height "480p"
-	
-	private int mAudioSampleRate = 44100;
-	private int mAudioChannels = 1;
-	private int mAudioBitRate = 64;
-
 	private AACHelper aac;
 	private boolean useAAC = false;
 	private byte[] audioData;
@@ -70,6 +64,8 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
+		
+		button.setVisibility(View.VISIBLE);
 	}
 
 	@Override
@@ -124,17 +120,51 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				progress.setText("");
 			}
 		}
-		else if (view == buttonSelfieSwitch)
+		else
 		{
-			mIsSelfie = !mIsSelfie;
-			releaseCamera();
-			initCamera();
-			
+			mPreviewing = false;
+			camera.takePicture(null, null, this);
 		}
-		
-		
+	}
+	
+	private void toggleCamera ()
+	{
+		mIsSelfie = !mIsSelfie;
+		releaseCamera();
+		initCamera();
 	}
 
+	//support still pictures if you tap on the screen
+	@Override
+	public void onPictureTaken(final byte[] data, Camera camera) {		
+		File fileSecurePicture;
+		try {
+			long mTime = System.currentTimeMillis();
+			fileSecurePicture = new File(mFileBasePath,"secureselfie_" + mTime + ".jpg");
+
+			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(fileSecurePicture));
+			out.write(data);
+			out.flush();
+			out.close();
+
+			setResult(Activity.RESULT_OK, new Intent().putExtra("path", fileSecurePicture.getAbsolutePath()));
+			
+			view.postDelayed(new Runnable()
+			{
+				@Override
+				public void run() {
+					resumePreview();
+				}
+			},200);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			setResult(Activity.RESULT_CANCELED);
+
+		}
+
+	}
+	
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		
@@ -254,7 +284,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 							
 							YuvImage yuv = new YuvImage(dataResult, mPreviewFormat, mLastWidth, mLastHeight, null);
 						    ByteArrayOutputStream out = new ByteArrayOutputStream();
-						    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), mJpegQuality, out);				    
+						    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), MediaConstants.sJpegQuality, out);				    
 						    dataResult = out.toByteArray();
 						}   
 						
@@ -309,20 +339,19 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	 private void initAudio(final String audioPath) throws FileNotFoundException{
 
 			fileAudio  = new File(audioPath); 
-	     //   int sampleRate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
- 
+			
 			   outputStreamAudio = new BufferedOutputStream(new info.guardianproject.iocipher.FileOutputStream(fileAudio),8192*8);
 				
 			   if (useAAC)
 			   {
 				   aac = new AACHelper();
-				   aac.setEncoder(mAudioSampleRate, mAudioChannels, mAudioBitRate);
+				   aac.setEncoder(MediaConstants.sAudioSampleRate, MediaConstants.sAudioChannels, MediaConstants.sAudioBitRate);
 			   }
 			   else
 			   {
 			   
-				   int minBufferSize = AudioRecord.getMinBufferSize(mAudioSampleRate, 
-				     AudioFormat.CHANNEL_IN_MONO, 
+				   int minBufferSize = AudioRecord.getMinBufferSize(MediaConstants.sAudioSampleRate, 
+					MediaConstants.sChannelConfigIn, 
 				     AudioFormat.ENCODING_PCM_16BIT)*8;
 				   
 				   audioData = new byte[minBufferSize];
@@ -336,8 +365,8 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				   }
 				   
 				   audioRecord = new AudioRecord(audioSource,
-						   mAudioSampleRate,
-				     AudioFormat.CHANNEL_IN_MONO,
+						   MediaConstants.sAudioSampleRate,
+						   MediaConstants.sChannelConfigIn,
 				     AudioFormat.ENCODING_PCM_16BIT,
 				     minBufferSize);
 			   }

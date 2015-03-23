@@ -12,6 +12,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.media.ExifInterface;
 import android.os.Bundle;
+import android.view.View;
 
 public class StillCameraActivity extends CameraBaseActivity {
 	
@@ -25,9 +26,7 @@ public class StillCameraActivity extends CameraBaseActivity {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
-		mPreviewWidth = 1280;
-		mPreviewHeight = 720;
-		
+		button.setVisibility(View.GONE);//we don't need a shutter button - the user can just tap on the screen!
 	}
 
 	@Override
@@ -56,7 +55,7 @@ public class StillCameraActivity extends CameraBaseActivity {
 				public void run() {
 					resumePreview();
 				}
-			},500);
+			},200);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -64,12 +63,6 @@ public class StillCameraActivity extends CameraBaseActivity {
 
 		}
 
-	}
-
-	@Override
-	public void onPreviewFrame(byte[] data, Camera camera) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	

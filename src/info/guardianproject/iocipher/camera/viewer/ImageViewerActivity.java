@@ -11,6 +11,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 public class ImageViewerActivity extends Activity {
@@ -22,6 +25,16 @@ public class ImageViewerActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
+	    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	    
+		// This example uses decor view, but you can use any visible view.
+		View decorView = getWindow().getDecorView();
+		int uiOptions = View.SYSTEM_UI_FLAG_LOW_PROFILE;
+		decorView.setSystemUiVisibility(uiOptions);
+		
+	        
 		setContentView(R.layout.image);
 		
 		Intent intent = getIntent();

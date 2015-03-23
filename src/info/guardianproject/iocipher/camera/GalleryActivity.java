@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -29,7 +29,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -38,24 +37,28 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
-public class GalleryActivity extends ListActivity  implements ICacheWordSubscriber {
+public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static String TAG = "FileBrowser";
 
 	private List<String> item = null;
 	private List<String> path = null;
-	private TextView fileInfo;
 	private String[] items;
 	private java.io.File dbFile;
 	private String root = "/";
-	/** Called when the activity is first created. */
-
+	
+	private GridView gridview;
+	
 	private CacheWordHandler mCacheWord;
 	
+	 /** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -74,10 +77,12 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 		}
 
 		setContentView(R.layout.main);
-		fileInfo = (TextView) findViewById(R.id.info);
+		
+		gridview = (GridView) findViewById(R.id.gridview);
 
         mCacheWord = new CacheWordHandler(this, this);
         mCacheWord.connectToService(); 
+        
 	}
 
 	protected void onResume() {
@@ -90,7 +95,7 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 		else
 		{
 			mCacheWord.reattach();
-			getFileList(root);
+			
 		}
 		
 	}
@@ -109,10 +114,17 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 	}
 
 	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+        getFileList(root);
+	}
+
+	@Override
 	public void onCacheWordOpened() {
 		
 		//great!
-		
+        getFileList(root);
 	}
 
 	@Override
@@ -260,161 +272,152 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 				item.add(fileItem.getName());
 			}
 		}
-		fileInfo.setText("Info: " + dirPath + " [ " + files.length + " item ]");
+		
 		// declare array with specific number of items
 		items = new String[item.size()];
 		// send data arraylist(item) to array(items)
 		item.toArray(items);
-		setListAdapter(new IconicList());
-	}
+	    gridview.setAdapter(new IconicList());
 
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		final File file = new File(path.get(position));
-		if (file.isDirectory()) {
-			if (file.canRead()) {
-				getFileList(path.get(position));
-			} else {
-				new AlertDialog.Builder(this)
-						.setIcon(R.drawable.icon)
-						.setTitle(
-								"[" + file.getName() + "] folder can't be read")
-						.setPositiveButton("OK",
-								new DialogInterface.OnClickListener() {
+	    gridview.setOnItemClickListener(new OnItemClickListener() {
+	        public void onItemClick(AdapterView<?> parent, View v,
+	                int position, long id) {
+	    
+					File file = new File(path.get(position));
+					
+					if (file.isDirectory()) {
+							if (file.canRead()) {
+								getFileList(path.get(position));
+							} else {
+								//show error
+				
+							}
+					} else {
+						showItem (file);
+					}
+	        }
+					
+	     });
+	    
+	    gridview.setOnItemLongClickListener(new OnItemLongClickListener () {
 
-									// @Override
-									public void onClick(DialogInterface dialog,
-											int which) {
-										// TODO Auto-generated method stub
-
-									}
-								}).show();
-
+			@Override
+			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+					int position, long arg3) {
+				
+				File file = new File(path.get(position));
+				if (file.isDirectory()) {
+					if (file.canRead()) {
+						getFileList(path.get(position));
+					} else {
+						//show error
+		
+					}
+				} else {
+					showItemDialog (file);
+				}
+				
+				return false;
 			}
-		} else {
-			//Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
-			final Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
-			
-			new AlertDialog.Builder(this)
-					.setIcon(R.drawable.icon)
-					.setTitle("[" + file.getName() + "]")
-					.setNeutralButton("View",
-							new DialogInterface.OnClickListener() {
-						// @Override
+	    	
+	    });
+	    
+	}
+	
+	private void showItemDialog (final File file)
+	{
+		
+		new AlertDialog.Builder(GalleryActivity.this)
+				.setIcon(R.drawable.ic_launcher)
+				.setTitle("[" + file.getName() + "]")
+				.setNegativeButton("Delete",
+						new DialogInterface.OnClickListener() {
+					
 						public void onClick(DialogInterface dialog,
-								int which) {
-							try {
+							int which) {
+							
+							file.delete();
+							getFileList(root);
+						}
+						
+				})
+				.setPositiveButton("Share...",
+						new DialogInterface.OnClickListener() {
+
+							// @Override
+							public void onClick(DialogInterface dialog,
+									int which) {
+								
+								//Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
+								Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
+								
+								//java.io.File exportFile = exportToDisk(file);
+								//Uri uriExport = Uri.fromFile(exportFile);
+								
+								Intent intent = new Intent(Intent.ACTION_SEND);
+								
 								String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
 								String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
-								if (fileExtension.equals("ts"))
-									mimeType = "application/mpeg*";
-								
+								if (fileExtension.equals("mp4")||fileExtension.equals("mkv")||fileExtension.equals("mov"))
+									mimeType = "video/*";
 								if (mimeType == null)
 									mimeType = "application/octet-stream";
-	
-								if (mimeType.startsWith("image"))
-								{
-									 Intent intent = new Intent(GalleryActivity.this,ImageViewerActivity.class);
-									  intent.setType(mimeType);
-									  intent.putExtra("vfs", file.getAbsolutePath());
-									  startActivity(intent);	
-								}
-								else if (fileExtension.equals("mp4") || mimeType.startsWith("video"))
-								{
-									Intent intent = new Intent(GalleryActivity.this,MjpegViewerActivity.class);
-									  intent.setType(mimeType);
-									  intent.putExtra("video", file.getAbsolutePath());
-									  
-									  startActivity(intent);	
-									
-									//shareVideoUsingStream(file, mimeType);
-								}
-								else {
-						          Intent intent = new Intent(Intent.ACTION_VIEW);													
-								  intent.setDataAndType(uri, mimeType);
-								  startActivity(intent);
-								}
-								 
 								
-							} catch (ActivityNotFoundException e) {
-								Log.e(TAG, "No relevant Activity found", e);
-							}
-						}
-					})
-					.setNegativeButton("Delete",
-							new DialogInterface.OnClickListener() {
-						
-							public void onClick(DialogInterface dialog,
-								int which) {
+								intent.setDataAndType(uri, mimeType);
+								intent.putExtra(Intent.EXTRA_STREAM, uri);
+								intent.putExtra(Intent.EXTRA_SUBJECT, file.getName());
+								intent.putExtra(Intent.EXTRA_TITLE, file.getName());
 								
-								file.delete();
-								getFileList(root);
-							}
-							
-					})
-					.setPositiveButton("Share...",
-							new DialogInterface.OnClickListener() {
-
-								// @Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									
-									//java.io.File exportFile = exportToDisk(file);
-									//Uri uriExport = Uri.fromFile(exportFile);
-									
-									Intent intent = new Intent(Intent.ACTION_SEND);
-									
-									String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-									String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
-									if (fileExtension.equals("mp4")||fileExtension.equals("mkv")||fileExtension.equals("mov"))
-										mimeType = "video/*";
-									if (mimeType == null)
-										mimeType = "application/octet-stream";
-									
-									intent.setDataAndType(uri, mimeType);
-									intent.putExtra(Intent.EXTRA_STREAM, uri);
-									intent.putExtra(Intent.EXTRA_SUBJECT, file.getName());
-									intent.putExtra(Intent.EXTRA_TITLE, file.getName());
-									
-									try {
-										startActivity(Intent.createChooser(intent, "Share this!"));
-									} catch (ActivityNotFoundException e) {
-										Log.e(TAG, "No relevant Activity found", e);
-									}
+								try {
+									startActivity(Intent.createChooser(intent, "Share this!"));
+								} catch (ActivityNotFoundException e) {
+									Log.e(TAG, "No relevant Activity found", e);
 								}
-							}).show();
-		}
-		
+							}
+						}).show();
 	}
 	
-	
-	public java.io.File exportToDisk (File fileIn)
+	private void showItem (File file)
 	{
-		java.io.File fileOut = null;
-		
 		try {
+			String fileExtension = MimeTypeMap.getFileExtensionFromUrl(file.getAbsolutePath());
+			String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
+			if (fileExtension.equals("ts"))
+				mimeType = "application/mpeg*";
 			
-			fileOut = new java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),fileIn.getName());
-			FileInputStream fis = new FileInputStream(fileIn);		
-			java.io.FileOutputStream fos = new java.io.FileOutputStream(fileOut);
-			
-			byte[] b = new byte[4096];
-			int len;
-			while ((len = fis.read(b))!=-1)
+			if (mimeType == null)
+				mimeType = "application/octet-stream";
+
+			if (mimeType.startsWith("image"))
 			{
-				fos.write(b, 0, len);
+				 Intent intent = new Intent(GalleryActivity.this,ImageViewerActivity.class);
+				  intent.setType(mimeType);
+				  intent.putExtra("vfs", file.getAbsolutePath());
+				  startActivity(intent);	
 			}
+			else if (fileExtension.equals("mp4") || mimeType.startsWith("video"))
+			{
+				Intent intent = new Intent(GalleryActivity.this,MjpegViewerActivity.class);
+				  intent.setType(mimeType);
+				  intent.putExtra("video", file.getAbsolutePath());
+				  
+				  startActivity(intent);	
+				
+				//shareVideoUsingStream(file, mimeType);
+			}
+			else {
+				//Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
+			  Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
+				
+	          Intent intent = new Intent(Intent.ACTION_VIEW);													
+			  intent.setDataAndType(uri, mimeType);
+			  startActivity(intent);
+			}
+			 
 			
-			fis.close();
-			fos.flush();
-			fos.close();
-			
-		} catch (IOException e) {
-			Log.d(TAG,"error exporting",e);
+		} catch (ActivityNotFoundException e) {
+			Log.e(TAG, "No relevant Activity found", e);
 		}
-		
-		return fileOut;
-		
 	}
 
 	class IconicList extends ArrayAdapter {
@@ -427,8 +430,8 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 
 		public View getView(int position, View convertView, ViewGroup parent) {
 			LayoutInflater inflater = getLayoutInflater();
-			View row = inflater.inflate(R.layout.row, null);
-			TextView label = (TextView) row.findViewById(R.id.label);
+			View row = inflater.inflate(R.layout.gridsq, null);
+			
 			ImageView icon = (ImageView) row.findViewById(R.id.icon);
 			
 			File f = new File(path.get(position)); // get the file according the
@@ -444,6 +447,7 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 			if (mimeType == null)
 				mimeType = "application/octet-stream";
 			
+			/**
 			StringBuffer labelText = new StringBuffer();
 			labelText.append(items[position]).append('\n');
 			
@@ -455,6 +459,7 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 			labelText.append("Time: ").append(new Date(f.lastModified()).toLocaleString());
 			
 			label.setText(labelText.toString());
+			*/
 			
 			if (f.isDirectory()) {
 				icon.setImageResource(R.drawable.folder);
@@ -469,6 +474,14 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 					Log.d(TAG,"error showing thumbnail",e);
 					icon.setImageResource(R.drawable.text);	
 				}
+			}			
+			else if (mimeType.startsWith("audio")||f.getName().endsWith(".pcm")||f.getName().endsWith(".aac"))
+			{
+				icon.setImageResource(R.drawable.audioclip);
+			}
+			else if (mimeType.startsWith("video")||f.getName().endsWith(".mp4")||f.getName().endsWith(".mov"))
+			{
+				icon.setImageResource(R.drawable.videoclip);
 			}
 			else
 			{

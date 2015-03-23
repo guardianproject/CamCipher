@@ -34,7 +34,7 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
     private EditText mConfirmNewPassphrase;
     private View mViewCreatePassphrase;
     private View mViewEnterPassphrase;
-    private Button mBtnOpen;
+ //   private Button mBtnOpen;
     private String mPasswordError;
     private TwoViewSlider mSlider;
 
@@ -166,11 +166,19 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
                         showInequalityError();
                         mSlider.showNewPasswordField();
                     }
+                    else {
+                        try {
+                            mCacheWord.setPassphrase(mNewPassphrase.getText().toString().toCharArray());                        
+                        } catch (GeneralSecurityException e) {
+                            Log.e(TAG, "Cacheword pass initialization failed: " + e.getMessage());
+                        }
+                    }
                 }
                 return false;
             }
         });
 
+        /*
         Button btnCreate = (Button) findViewById(R.id.btnCreate);
         btnCreate.setOnClickListener(new OnClickListener()
         {
@@ -193,13 +201,14 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
                     }
                 }
             }
-        });
+        });*/
     }
 
     private void promptPassphrase() {
         mViewCreatePassphrase.setVisibility(View.GONE);
         mViewEnterPassphrase.setVisibility(View.VISIBLE);
 
+        /*
         mBtnOpen = (Button) findViewById(R.id.btnOpen);
         mBtnOpen.setOnClickListener(new OnClickListener() {
             @Override
@@ -215,7 +224,7 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
                     return;
                 }
             }
-        });
+        });*/
 
         mEnterPassphrase.setOnEditorActionListener(new OnEditorActionListener()
         {
@@ -232,7 +241,16 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
                         @Override
                         protected void onReceiveResult(int resultCode, Bundle resultData) {
                             super.onReceiveResult(resultCode, resultData);
-                            mBtnOpen.performClick();
+                            if (mEnterPassphrase.getText().toString().length() == 0)
+                                return;
+                            // Check passphrase
+                            try {
+                                mCacheWord.setPassphrase(mEnterPassphrase.getText().toString().toCharArray());
+                            } catch (GeneralSecurityException e) {
+                                mEnterPassphrase.setText("");
+                                Log.e(TAG, "Cacheword pass verification failed: " + e.getMessage());
+                                return;
+                            }
                         }
                     });
                     return true;
