@@ -21,9 +21,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
  <item
-        android:title="Photo"
+      android:title="Photo"
         android:id="@+id/menu_camera"
          android:showAsAction="always"
+         android:icon="@drawable/ic_action_camera"
          >
          
      </item>
@@ -32,6 +33,8 @@
         android:title="Video"
         android:id="@+id/menu_video"
          android:showAsAction="always"
+         android:icon="@drawable/ic_action_video"
+         
          >
      
  </item>
