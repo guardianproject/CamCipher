@@ -41,5 +41,8 @@
  
  <item android:title="Lock"
      android:id="@+id/menu_lock"
-     android:showAsAction="never"/>
+     android:showAsAction="always"
+              android:icon="@drawable/ic_action_secure"
+     
+     />
 </menu>
