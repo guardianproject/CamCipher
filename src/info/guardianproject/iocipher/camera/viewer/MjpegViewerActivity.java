@@ -3,9 +3,9 @@ package info.guardianproject.iocipher.camera.viewer;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
+import info.guardianproject.iocipher.camera.encoders.AACHelper;
 
 import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -14,6 +14,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -22,6 +23,10 @@ public class MjpegViewerActivity extends Activity {
 
     private MjpegView mv;
     private AudioTrack at;
+
+    InputStream isAudio = null;
+    AACHelper aac = null;
+    boolean useAAC = false;
     
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,10 +46,30 @@ public class MjpegViewerActivity extends Activity {
 	        mv.setDisplayMode(MjpegView.SIZE_BEST_FIT);
 	     //   mv.showFps(true);
 
-			File fileAudio = new File(ioCipherAudioPath);
+			File fileAudio = null;
+			
+			if (ioCipherAudioPath == null)
+			{
+				fileAudio = new File(ioCipherVideoPath + ".pcm");
+				if (!fileAudio.exists())
+				{
+					fileAudio = new File(ioCipherVideoPath + ".aac");
+					useAAC = true;
+				}
+			}
+			else
+			{
+				fileAudio = new File(ioCipherAudioPath);
+				
+				if (getIntent().getExtras().containsKey("useAAC"))
+					useAAC = getIntent().getExtras().getBoolean("useAAC",false);
+				else if (ioCipherAudioPath.endsWith(".aac"))
+					useAAC = true;
+			}
+			
 			if (fileAudio.exists())
 			{
-				initAudio(ioCipherAudioPath);
+				initAudio(fileAudio.getAbsolutePath());
 				new Thread ()
 				{
 					public void run ()
@@ -64,47 +89,58 @@ public class MjpegViewerActivity extends Activity {
 		        
 	    	} 
         catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
+			Log.e(TAG,"an error occcured init'g video playback",e);
 		}
     }
     
-    InputStream isAudio = null;
-    
     public void initAudio(String vfsPath) throws IOException {
 
-        
-        int sampleRate = 11025;// AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
+    	isAudio = new BufferedInputStream(new FileInputStream(vfsPath));
 
-        int minBufferSize = AudioTrack.getMinBufferSize(sampleRate,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)*8;
-        
-        isAudio = new BufferedInputStream(new FileInputStream(vfsPath));
-
-        at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
-            AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-            minBufferSize, AudioTrack.MODE_STREAM);
+    	if (useAAC)
+    	{
+    		aac = new AACHelper();
+    		aac.setDecoder(44100, 1, 64);
+    	}
+    	else
+    	{
+	        int sampleRate = 11025;// AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
+	
+	        int minBufferSize = AudioTrack.getMinBufferSize(sampleRate,
+	                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)*8;
+	
+	        at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
+	            AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
+	            minBufferSize, AudioTrack.MODE_STREAM);
+    	}
+         
     }
     
     public void playAudio () throws IOException
     {
-        try{
-        	byte[] music = null;
-        	music = new byte[512];
-            at.play();
-
-            int i = 0;
-            while((i = isAudio.read(music)) != -1)
-                at.write(music, 0, i);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        at.stop();
-        at.release();
-        isAudio.close();
-        at = null;
+    	if (useAAC)
+    		aac.startPlaying(isAudio);
+    	else
+    	{
+	        try{
+	        	byte[] music = null;
+	        	music = new byte[512];
+	            at.play();
+	
+	            int i = 0;
+	            while((i = isAudio.read(music)) != -1)
+	                at.write(music, 0, i);
+	
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	
+	        at.stop();
+	        at.release();
+	        isAudio.close();
+	        at = null;
+    	}
     }
 
     public void onPause() {

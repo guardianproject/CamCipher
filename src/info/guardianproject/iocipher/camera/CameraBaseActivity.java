@@ -42,8 +42,10 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 	int mPreviewWidth = 720;
 	int mPreviewHeight = 480;
 	int mRotation = 0;
-	
+	private static final int BUFFER_COUNT = 60;
+
 	boolean mIsSelfie = false;
+	
 	
 	@SuppressWarnings("deprecation")
 	@Override
@@ -166,19 +168,19 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 				 }
 									
 					camera.setParameters(params);
-					
+				
+					/*
+	                for (int i = 0; i < BUFFER_COUNT; i++) {
+	                    byte[] buffer = new byte[mPreviewWidth * mPreviewHeight *
+	                        ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8];
+	                    camera.addCallbackBuffer(buffer);
+	                    
+	                }
+			        
+//					camera.setPreviewCallback(this);
+			        camera.setPreviewCallbackWithBuffer(this);
+			        */
 					camera.setPreviewCallback(this);
-					
-					//Log.d(TAG, "Initialize Callback Buffers: " + BUFFER_SIZE);
-
-					 //int BUFFER_SIZE = (int) (mPreviewWidth * mPreviewHeight * 1.5);
-					 //int NUM_CAMERA_PREVIEW_BUFFERS = 3;
-					 
-			        //camera.setPreviewCallbackWithBuffer(null);
-			        //camera.setPreviewCallbackWithBuffer(this);
-			        //for (int i = 0; i < NUM_CAMERA_PREVIEW_BUFFERS; i++) {
-			         //   camera.addCallbackBuffer(new byte[BUFFER_SIZE]);
-			        //}
 			        
 					if (holder != null)
 						try {

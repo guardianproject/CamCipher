@@ -2,6 +2,7 @@ package info.guardianproject.iocipher.camera;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileOutputStream;
+import info.guardianproject.iocipher.camera.encoders.AACHelper;
 import info.guardianproject.iocipher.camera.encoders.ImageToMJPEGMOVMuxer;
 import info.guardianproject.iocipher.camera.io.IOCipherFileChannelWrapper;
 
@@ -19,15 +20,26 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
-import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
+import android.media.MediaRecorder.AudioSource;
+import android.os.Build;
+import android.util.Log;
 
 public class VideoCameraActivity extends CameraBaseActivity {
 	
@@ -42,16 +54,28 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private int mLastHeight = -1;
 	private int mPreviewFormat = -1;
 	
-	private int mJpegQuality = 50;
+	private int mJpegQuality = 70; //70 is the quality!
+	int mPreviewWidth = 720; //defualt width
+	int mPreviewHeight = 480; //default height "480p"
+	
+	private int mAudioSampleRate = 44100;
+	private int mAudioChannels = 1;
+	private int mAudioBitRate = 64;
+
+	private AACHelper aac;
+	private boolean useAAC = false;
+	private byte[] audioData;
+	private AudioRecord audioRecord;
 	
 	private int mFramesTotal = 0;
 	private int mFPS = 0;
 	
-	private int mAudioSampleRate = 11025;
-	
 	private boolean mPreCompressFrames = true;
-	OutputStream outputStreamAudio;
-	 info.guardianproject.iocipher.File fileAudio;
+	private OutputStream outputStreamAudio;
+	private info.guardianproject.iocipher.File fileAudio;
+
+	private int frameCounter = 0;
+	private long start = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -84,7 +108,11 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				
 				try {
 					mIsRecording = true;
-					initAudio(fileOut.getAbsolutePath()+".pcm");
+					
+					initAudio(fileOut.getAbsolutePath()+".aac");
+					
+					//initAudio(fileOut.getAbsolutePath()+".pcm");
+					
 					new Encoder(fileOut).start();
 					//start capture
 					startAudioRecording();
@@ -136,36 +164,11 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		    mPreviewFormat = parameters.getPreviewFormat();
 			
 			
-			byte[] dataResult = data;
-			
-			if (mPreCompressFrames)
-			{
-				if (mRotation > 0)
-				{
-					dataResult = rotateYUV420Degree90(data,mLastHeight,mLastWidth);
-					
-					 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_FRONT)
-					 {						 
-							 dataResult = rotateYUV420Degree90(dataResult,mLastWidth,mLastHeight);
-							 dataResult = rotateYUV420Degree90(dataResult,mLastHeight,mLastWidth);						 
-					 }
-					 
-					
-				}
-				
-				YuvImage yuv = new YuvImage(dataResult, mPreviewFormat, mLastWidth, mLastHeight, null);
-			    ByteArrayOutputStream out = new ByteArrayOutputStream();
-			    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), mJpegQuality, out);				    
-			    dataResult = out.toByteArray();
-			}   
-			
-			int frameCounter = 0;
-			long start = 0;
 			synchronized (mFrameQ)
 			{
-				if (dataResult != null)
+				if (data != null)
 				{
-					mFrameQ.add(dataResult);
+					mFrameQ.add(data);
 					mFramesTotal++;
 					
 					frameCounter++;
@@ -241,8 +244,31 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				{
 					if (mFrameQ.peek() != null)
 					{
-						byte[] bytes = mFrameQ.pop();						 
-						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(bytes),mFPS);						
+						byte[] data = mFrameQ.pop();		
+						
+						byte[] dataResult = data;
+						
+						if (mPreCompressFrames)
+						{
+							if (mRotation > 0)
+							{
+								dataResult = rotateYUV420Degree90(data,mLastHeight,mLastWidth);
+								
+								 if (getCameraDirection() == CameraInfo.CAMERA_FACING_FRONT)
+								 {						 
+									 dataResult = rotateYUV420Degree90(dataResult,mLastWidth,mLastHeight);
+									 dataResult = rotateYUV420Degree90(dataResult,mLastHeight,mLastWidth);						 
+								 }
+								
+							}
+							
+							YuvImage yuv = new YuvImage(dataResult, mPreviewFormat, mLastWidth, mLastHeight, null);
+						    ByteArrayOutputStream out = new ByteArrayOutputStream();
+						    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), mJpegQuality, out);				    
+						    dataResult = out.toByteArray();
+						}   
+						
+						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(dataResult),mFPS);						
 					}
 
 				}
@@ -282,13 +308,11 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			else if (msg.what == 1)
 			{
 				mIsRecording = false; //stop recording
+				aac.stopRecording();
 			}
 		}
 		
 	};
-	
-	private byte[] audioData;
-	private AudioRecord audioRecord;
 	
 	 private void initAudio(final String audioPath) throws FileNotFoundException{
 
@@ -297,25 +321,34 @@ public class VideoCameraActivity extends CameraBaseActivity {
  
 			   outputStreamAudio = new BufferedOutputStream(new info.guardianproject.iocipher.FileOutputStream(fileAudio),8192*8);
 				
-			   int minBufferSize = AudioRecord.getMinBufferSize(mAudioSampleRate, 
-			     AudioFormat.CHANNEL_IN_MONO, 
-			     AudioFormat.ENCODING_PCM_16BIT)*8;
-			   
-			   audioData = new byte[minBufferSize];
-
-			   int audioSource = MediaRecorder.AudioSource.CAMCORDER;
-			   
-			   if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_FRONT)
+			   if (useAAC)
 			   {
-				   audioSource = MediaRecorder.AudioSource.MIC;
-				   
+				   aac = new AACHelper();
+				   aac.setEncoder(mAudioSampleRate, mAudioChannels, mAudioBitRate);
 			   }
+			   else
+			   {
 			   
-			   audioRecord = new AudioRecord(audioSource,
-					   mAudioSampleRate,
-			     AudioFormat.CHANNEL_IN_MONO,
-			     AudioFormat.ENCODING_PCM_16BIT,
-			     minBufferSize);
+				   int minBufferSize = AudioRecord.getMinBufferSize(mAudioSampleRate, 
+				     AudioFormat.CHANNEL_IN_MONO, 
+				     AudioFormat.ENCODING_PCM_16BIT)*8;
+				   
+				   audioData = new byte[minBufferSize];
+	
+				   int audioSource = MediaRecorder.AudioSource.CAMCORDER;
+				   
+				   if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_FRONT)
+				   {
+					   audioSource = MediaRecorder.AudioSource.MIC;
+					   
+				   }
+				   
+				   audioRecord = new AudioRecord(audioSource,
+						   mAudioSampleRate,
+				     AudioFormat.CHANNEL_IN_MONO,
+				     AudioFormat.ENCODING_PCM_16BIT,
+				     minBufferSize);
+			   }
 	 }
 	 
 	 private void startAudioRecording ()
@@ -328,6 +361,17 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			 public void run ()
 			 {
 			 
+				 if (useAAC)
+				 {
+					 try {
+						aac.startRecording(outputStreamAudio);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				 }
+				 else
+				 {
 				   audioRecord.startRecording();
 				   
 				   while(mIsRecording){
@@ -348,11 +392,12 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				   try {
 					   outputStreamAudio.flush();
 					outputStreamAudio.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				   
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				 }
+				 
 				 
 			 }
 		 };

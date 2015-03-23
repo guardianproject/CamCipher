@@ -324,7 +324,6 @@ public class GalleryActivity extends ListActivity  implements ICacheWordSubscrib
 									Intent intent = new Intent(GalleryActivity.this,MjpegViewerActivity.class);
 									  intent.setType(mimeType);
 									  intent.putExtra("video", file.getAbsolutePath());
-									  intent.putExtra("audio", file.getAbsolutePath() + ".pcm");
 									  
 									  startActivity(intent);	
 									
