@@ -20,3 +20,7 @@ https://guardianproject.info/code/iocipher/
 
 We'd like to hear from you if you have included IOCipher in your app!
 support@guardianproject.info
+
+Some icons courtesy of: http://www.pelfusion.com/
+and http://www.iconarchive.com/show/flat-folder-icons-by-pelfusion/Empty-Folder-icon.html
+(free for non-commercial use)
