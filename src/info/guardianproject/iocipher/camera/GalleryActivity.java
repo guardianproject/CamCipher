@@ -14,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +36,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -44,7 +44,6 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static String TAG = "FileBrowser";
@@ -65,6 +64,11 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		//prevent screenshots
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+				WindowManager.LayoutParams.FLAG_SECURE);
+
+		
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		String type = intent.getType();
@@ -155,15 +159,6 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	protected void onDestroy() {
 		super.onDestroy();
 		
-		/**
-		if (VirtualFileSystem.get().is)
-		{
-			try
-			{
-				VirtualFileSystem.get().unmount();
-			}catch(IllegalArgumentException iae){}
-		}*/
-		
 	}
 	
 	@Override
@@ -207,14 +202,11 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
     		{
     			//if storage is mounted, then we should lock it
     			boolean unmounted = StorageManager.unmountStorage();
-    		
-    			if (unmounted)
+    			mCacheWord.lock();
+    			
+    			if (!unmounted)    			
     			{
-    				mCacheWord.lock();
-    			}
-    			else
-    			{
-    				Toast.makeText(this, "Storage is busy... cannot lock yet.",Toast.LENGTH_LONG).show();
+    				//Toast.makeText(this, "Storage is busy... cannot lock yet.",Toast.LENGTH_LONG).show();
     			}
     		}
         	
@@ -532,7 +524,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	    // Decode image in background.
 	    @Override
 	    protected Bitmap doInBackground(File... fileImage) {
-	        
+
 	        BitmapFactory.Options bounds = new BitmapFactory.Options();	    
 			bounds.inSampleSize = 8;	 	    
 			Bitmap b;
@@ -541,6 +533,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				b = BitmapFactory.decodeStream(fis, null, bounds);
 				fis.close();
 				mBitCache.put(fileImage[0].getAbsolutePath(), b);
+				
 				return b;
 			} catch (Exception e) {
 				Log.e(TAG,"error decoding bitmap preview",e);

@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 
 public class VideoViewerActivity extends Activity implements
 OnBufferingUpdateListener, OnCompletionListener, OnPreparedListener,
@@ -41,6 +42,12 @@ private boolean mIsVideoReadyToBePlayed = false;
 @Override
 public void onCreate(Bundle icicle) {
 super.onCreate(icicle);
+
+//prevent screenshots
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+				WindowManager.LayoutParams.FLAG_SECURE);
+		
+		
 setContentView(R.layout.video);
 mPreview = (SurfaceView) findViewById(R.id.surface_video);
 holder = mPreview.getHolder();

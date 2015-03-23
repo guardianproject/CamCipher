@@ -28,7 +28,11 @@ public class ImageViewerActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
 	    WindowManager.LayoutParams.FLAG_FULLSCREEN);
-	    
+
+		//prevent screenshots
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+				WindowManager.LayoutParams.FLAG_SECURE);
+		
 		// This example uses decor view, but you can use any visible view.
 		View decorView = getWindow().getDecorView();
 		int uiOptions = View.SYSTEM_UI_FLAG_LOW_PROFILE;

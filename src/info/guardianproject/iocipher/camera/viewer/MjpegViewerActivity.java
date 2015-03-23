@@ -36,6 +36,10 @@ public class MjpegViewerActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
         WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+      //prevent screenshots
+      		getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+      				WindowManager.LayoutParams.FLAG_SECURE);
+      		
         mv = new MjpegView(this);
         setContentView(mv);        
 
