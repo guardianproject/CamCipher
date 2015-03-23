@@ -99,7 +99,7 @@ public class MjpegViewerActivity extends Activity {
 		}
     }
     
-    public void initAudio(String vfsPath) throws IOException {
+    public void initAudio(String vfsPath) throws Exception {
 
     	isAudio = new BufferedInputStream(new FileInputStream(vfsPath));
 

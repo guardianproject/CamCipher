@@ -227,7 +227,7 @@ public class AACHelper
         return -1;
     }
 
-    public boolean setEncoder(int sampleRate, int channels, int bitRate)
+    public boolean setEncoder(int sampleRate, int channels, int bitRate) throws Exception
     {
         encoder = MediaCodec.createEncoderByType("audio/mp4a-latm");
         MediaFormat format = new MediaFormat();
@@ -243,7 +243,7 @@ public class AACHelper
         return true;
     }
 
-    public boolean setDecoder(int sampleRate, int channels, int bitRate)
+    public boolean setDecoder(int sampleRate, int channels, int bitRate) throws Exception
     {
         decoder = MediaCodec.createDecoderByType("audio/mp4a-latm");
         MediaFormat format = new MediaFormat();

@@ -347,7 +347,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		
 	};
 	
-	 private void initAudio(final String audioPath) throws FileNotFoundException{
+	 private void initAudio(final String audioPath) throws Exception {
 
 			fileAudio  = new File(audioPath); 
 			
