@@ -29,6 +29,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -59,6 +60,9 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	
 	private CacheWordHandler mCacheWord;
 	
+	private final static int REQUEST_TAKE_PICTURE = 1000;
+	private final static int REQUEST_TAKE_VIDEO = 1001;
+	
 	 /** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -68,7 +72,13 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
 				WindowManager.LayoutParams.FLAG_SECURE);
 
+		setContentView(R.layout.main);
 		
+		gridview = (GridView) findViewById(R.id.gridview);
+
+        mCacheWord = new CacheWordHandler(this, this);
+        mCacheWord.connectToService(); 
+
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		String type = intent.getType();
@@ -81,16 +91,30 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				handleSendUri(intent.getData());
 			}
 		}
+		else if (MediaStore.ACTION_IMAGE_CAPTURE.equals(action))
+		{
+			//REQUEST_TAKE_PICTURE
 
-		setContentView(R.layout.main);
+			Intent intentCapture = new Intent(this,StillCameraActivity.class);
+			intentCapture.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+			intentCapture.putExtra("basepath", "/");
+			intentCapture.putExtra("selfie", false);
+			startActivityForResult(intentCapture, REQUEST_TAKE_PICTURE);
+		}		
+		else if (MediaStore.ACTION_VIDEO_CAPTURE.equals(action))
+		{
+			//REQUEST_TAKE_VIDEO
+			Intent intentCapture = new Intent(this,VideoCameraActivity.class);
+			intentCapture.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
+			intentCapture.putExtra("basepath", "/");
+			intentCapture.putExtra("selfie", false);
+			startActivityForResult(intentCapture, REQUEST_TAKE_VIDEO);
+		}
 		
-		gridview = (GridView) findViewById(R.id.gridview);
-
-        mCacheWord = new CacheWordHandler(this, this);
-        mCacheWord.connectToService(); 
-        
 	}
+	
 
+	
 	protected void onResume() {
 		super.onResume();
 		
@@ -123,7 +147,30 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-        getFileList(root);
+        if (resultCode == RESULT_OK)
+        {
+	        if (requestCode == REQUEST_TAKE_PICTURE)
+	        {
+	        	String ioCipherFile = data.getExtras().getString(MediaStore.EXTRA_OUTPUT);
+	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);
+				data.getExtras().putString(MediaStore.EXTRA_OUTPUT, uri.toString());
+	        	setResult(resultCode,data);	
+	        	finish();
+	        }
+	        else if (requestCode == REQUEST_TAKE_VIDEO)
+	        {
+	        	String ioCipherFile = data.getExtras().getString(MediaStore.EXTRA_OUTPUT);
+	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);
+				data.getExtras().putString(MediaStore.EXTRA_OUTPUT, uri.toString());
+	        	setResult(resultCode,data);
+	        	finish();
+	        }
+	        else
+	        {
+	        	getFileList(root);
+	        }
+        }
+        
 	}
 
 	@Override
@@ -142,8 +189,17 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	
 	private void goToLockScreen ()
 	{
-		mCacheWord.disconnectFromService();
+		try
+		{
+			mCacheWord.disconnectFromService();
+		}
+		catch (IllegalArgumentException iae)
+		{
+			Log.d(TAG,"error disconnecting from cacheword service",iae);
+		}
+		
 		Intent intent = new Intent(this,LockScreenActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(intent);
 		finish();
 	}

@@ -12,6 +12,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.media.ExifInterface;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 
 public class StillCameraActivity extends CameraBaseActivity {
@@ -20,6 +21,7 @@ public class StillCameraActivity extends CameraBaseActivity {
 	
 	private String mFileBasePath = null;
 	
+	boolean isRequest = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -27,6 +29,8 @@ public class StillCameraActivity extends CameraBaseActivity {
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
 		button.setVisibility(View.GONE);//we don't need a shutter button - the user can just tap on the screen!
+		
+		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_IMAGE_CAPTURE);
 	}
 
 	@Override
@@ -47,15 +51,24 @@ public class StillCameraActivity extends CameraBaseActivity {
 			out.flush();
 			out.close();
 
-			setResult(Activity.RESULT_OK, new Intent().putExtra("path", fileSecurePicture.getAbsolutePath()));
+			Intent intentResult = new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileSecurePicture.getAbsolutePath());
 			
-			view.postDelayed(new Runnable()
+			setResult(Activity.RESULT_OK, intentResult);
+			
+			if (isRequest)
 			{
-				@Override
-				public void run() {
-					resumePreview();
-				}
-			},200);
+				finish();
+			}
+			else
+			{
+				view.postDelayed(new Runnable()
+				{
+					@Override
+					public void run() {
+						resumePreview();
+					}
+				},200);
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();

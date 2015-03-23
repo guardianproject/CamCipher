@@ -28,6 +28,7 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -60,12 +61,17 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private int frameCounter = 0;
 	private long start = 0;
 
+	private boolean isRequest = false;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
 		button.setVisibility(View.VISIBLE);
+		
+		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_VIDEO_CAPTURE);
+
 	}
 
 	@Override
@@ -147,7 +153,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			out.flush();
 			out.close();
 
-			setResult(Activity.RESULT_OK, new Intent().putExtra("path", fileSecurePicture.getAbsolutePath()));
+			setResult(Activity.RESULT_OK, new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileSecurePicture.getAbsolutePath()));
 			
 			view.postDelayed(new Runnable()
 			{
@@ -294,6 +300,11 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				}
 
 				muxer.finish();
+				
+				setResult(Activity.RESULT_OK, new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileOut.getAbsolutePath()));
+				
+				if (isRequest)
+					finish();
 				
 			} catch (Exception e) {
 				Log.e(TAG, "IO", e);
