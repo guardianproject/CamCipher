@@ -35,4 +35,8 @@
          >
      
  </item>
+ 
+ <item android:title="Lock"
+     android:id="@+id/menu_lock"
+     android:showAsAction="never"/>
 </menu>

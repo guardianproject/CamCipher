@@ -66,8 +66,17 @@ public class LockScreenActivity extends Activity implements ICacheWordSubscriber
         super.onPause();
         mCacheWord.detach();
     }
+    
+    
 
     @Override
+	protected void onDestroy() {
+		super.onDestroy();
+		
+		mCacheWord.disconnectFromService();
+	}
+
+	@Override
     protected void onResume() {
         super.onResume();
         mCacheWord.reattach();

@@ -1,15 +1,13 @@
 package info.guardianproject.iocipher.camera;
 
+import info.guardianproject.cacheword.CacheWordHandler;
 import info.guardianproject.cacheword.ICacheWordSubscriber;
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
-import info.guardianproject.iocipher.VirtualFileSystem;
 import info.guardianproject.iocipher.camera.io.IOCipherContentProvider;
 import info.guardianproject.iocipher.camera.viewer.ImageViewerActivity;
 import info.guardianproject.iocipher.camera.viewer.MjpegViewerActivity;
-import info.guardianproject.iocipher.camera.viewer.StreamOverHttp;
-import info.guardianproject.iocipher.camera.viewer.VideoViewerActivity;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -45,7 +43,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class GalleryActivity extends ListActivity {
+public class GalleryActivity extends ListActivity  implements ICacheWordSubscriber {
 	private final static String TAG = "FileBrowser";
 
 	private List<String> item = null;
@@ -56,6 +54,8 @@ public class GalleryActivity extends ListActivity {
 	private String root = "/";
 	/** Called when the activity is first created. */
 
+	private CacheWordHandler mCacheWord;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -75,6 +75,9 @@ public class GalleryActivity extends ListActivity {
 
 		setContentView(R.layout.main);
 		fileInfo = (TextView) findViewById(R.id.info);
+
+        mCacheWord = new CacheWordHandler(this, this);
+        mCacheWord.connectToService(); 
 	}
 
 	protected void onResume() {
@@ -82,15 +85,57 @@ public class GalleryActivity extends ListActivity {
 		
 		if (!StorageManager.isStorageMounted())
 		{
-			Intent intent = new Intent(this,LockScreenActivity.class);
-			startActivity(intent);
-			finish();
+			goToLockScreen ();
 		}
 		else
 		{
+			mCacheWord.reattach();
 			getFileList(root);
 		}
 		
+	}
+
+	@Override
+	public void onCacheWordLocked() {
+	
+		if (StorageManager.isStorageMounted())
+		{
+			//if storage is mounted, then we should lock it
+			StorageManager.unmountStorage();
+		}
+		
+		goToLockScreen ();
+		
+	}
+
+	@Override
+	public void onCacheWordOpened() {
+		
+		//great!
+		
+	}
+
+	@Override
+	public void onCacheWordUninitialized() {
+		
+		goToLockScreen ();
+		
+	}
+	
+	private void goToLockScreen ()
+	{
+		mCacheWord.disconnectFromService();
+		Intent intent = new Intent(this,LockScreenActivity.class);
+		startActivity(intent);
+		finish();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+
+		mCacheWord.reattach();
 	}
 
 	protected void onDestroy() {
@@ -139,6 +184,12 @@ public class GalleryActivity extends ListActivity {
         	intent.putExtra("basepath", "/");
         	intent.putExtra("selfie", false);
         	startActivityForResult(intent, 1);
+        	
+        	return true;
+        	
+        case R.id.menu_lock:
+        	
+        	mCacheWord.lock();
         	
         	return true;
         }	

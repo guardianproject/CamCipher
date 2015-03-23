@@ -15,6 +15,11 @@ public class StorageManager {
 		return VirtualFileSystem.get().isMounted();
 	}
 	
+	public static void unmountStorage ()
+	{
+		VirtualFileSystem.get().unmount();
+	}
+	
 	public static boolean mountStorage (Context context, String storagePath, byte[] passphrase)
 	{
 		File dbFile = null;
