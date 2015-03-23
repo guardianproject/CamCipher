@@ -27,6 +27,10 @@ public class MjpegViewerActivity extends Activity {
     InputStream isAudio = null;
     AACHelper aac = null;
     boolean useAAC = false;
+
+	private int mAudioSampleRate = 44100;
+	private int mAudioChannels = 1;
+	private int mAudioBitRate = 64;
     
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,16 +105,15 @@ public class MjpegViewerActivity extends Activity {
     	if (useAAC)
     	{
     		aac = new AACHelper();
-    		aac.setDecoder(44100, 1, 64);
+    		aac.setDecoder(mAudioSampleRate, mAudioChannels, mAudioBitRate);
     	}
     	else
     	{
-	        int sampleRate = 11025;// AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
 	
-	        int minBufferSize = AudioTrack.getMinBufferSize(sampleRate,
+	        int minBufferSize = AudioTrack.getMinBufferSize(mAudioSampleRate,
 	                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)*8;
 	
-	        at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
+	        at = new AudioTrack(AudioManager.STREAM_MUSIC, mAudioSampleRate,
 	            AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
 	            minBufferSize, AudioTrack.MODE_STREAM);
     	}
