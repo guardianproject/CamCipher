@@ -58,6 +58,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	
 	private GridView gridview;
 	private HashMap<String,Bitmap> mBitCache = new HashMap<String,Bitmap>();
+	private HashMap<String,BitmapWorkerThread> mBitLoaders = new HashMap<String,BitmapWorkerThread>();
 	
 	private CacheWordHandler mCacheWord;
 	
@@ -81,7 +82,6 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
         mCacheWord = new CacheWordHandler(this, this);
         mCacheWord.connectToService(); 
-        mCacheWord.setTimeout(-1);
         
 		Intent intent = getIntent();
 		String action = intent.getAction();
@@ -184,7 +184,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
 	@Override
 	public void onCacheWordOpened() {
-		
+
+        mCacheWord.setTimeout(-1);
 		//great!
         getFileList(root);
 	}
@@ -581,11 +582,20 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
 	private Bitmap getPreview(File fileImage) throws FileNotFoundException {
 
-		Bitmap b = mBitCache.get(fileImage.getAbsolutePath());
+		Bitmap b = null;
 		
-		if (b == null)
-			new BitmapWorkerThread(fileImage).start();
-		//	new BitmapWorkerTask().execute(fileImage);
+		synchronized (mBitCache)
+		{
+			b = mBitCache.get(fileImage.getAbsolutePath());
+			
+			if (b == null && mBitLoaders.get(fileImage.getAbsolutePath())==null)
+			{
+				BitmapWorkerThread bwt = new BitmapWorkerThread(fileImage);
+				mBitLoaders.put(fileImage.getAbsolutePath(),bwt);
+				bwt.start();
+				
+			}
+		}
 		
 		return b;
 	}
@@ -609,7 +619,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				b = BitmapFactory.decodeStream(fis, null, bounds);
 				fis.close();
 				mBitCache.put(fileImage.getAbsolutePath(), b);
-				
+				mBitLoaders.remove(fileImage.getAbsolutePath());
+
 				h.post(new Runnable()
 				{
 					public void run ()
