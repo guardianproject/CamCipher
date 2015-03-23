@@ -9,14 +9,13 @@ import info.guardianproject.iocipher.camera.io.IOCipherContentProvider;
 import info.guardianproject.iocipher.camera.viewer.ImageViewerActivity;
 import info.guardianproject.iocipher.camera.viewer.MjpegViewerActivity;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import android.app.Activity;
@@ -43,7 +42,6 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static String TAG = "FileBrowser";
@@ -55,6 +53,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private String root = "/";
 	
 	private GridView gridview;
+	private HashMap<String,Bitmap> mBitCache = new HashMap<String,Bitmap>();
 	
 	private CacheWordHandler mCacheWord;
 	
@@ -420,6 +419,12 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 		}
 	}
 
+	static class ViewHolder {
+		  
+		  ImageView icon;		  
+		  
+		}
+	
 	class IconicList extends ArrayAdapter {
 
 		public IconicList() {
@@ -430,13 +435,27 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 
 		public View getView(int position, View convertView, ViewGroup parent) {
 			LayoutInflater inflater = getLayoutInflater();
-			View row = inflater.inflate(R.layout.gridsq, null);
 			
-			ImageView icon = (ImageView) row.findViewById(R.id.icon);
+			ViewHolder holder = null;
+			
+			if (convertView == null)
+				convertView = inflater.inflate(R.layout.gridsq, null);							
+			else 
+				holder = (ViewHolder)convertView.getTag();
+			
+			if (holder == null)
+			{
+				holder = new ViewHolder();
+			
+				holder.icon = (ImageView) convertView.findViewById(R.id.icon);
+
+				holder.icon.setImageResource(R.drawable.text);
+			}
+			
 			
 			File f = new File(path.get(position)); // get the file according the
-													// position
-			
+												// position
+		
 			String mimeType = null;
 
 			String[] tokens = f.getName().split("\\.(?=[^\\.]+$)");
@@ -447,70 +466,53 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			if (mimeType == null)
 				mimeType = "application/octet-stream";
 			
-			/**
-			StringBuffer labelText = new StringBuffer();
-			labelText.append(items[position]).append('\n');
-			
-			//TODO this lastModified is returning a strange value
-			//Date dateMod = new Date(f.lastModified());
-			//labelText.append("Modified: " ).append(dateMod.toGMTString()).append('\n');
-			
-			labelText.append("Size: ").append(f.length()).append(' ');
-			labelText.append("Time: ").append(new Date(f.lastModified()).toLocaleString());
-			
-			label.setText(labelText.toString());
-			*/
-			
 			if (f.isDirectory()) {
-				icon.setImageResource(R.drawable.folder);
+				holder.icon.setImageResource(R.drawable.folder);
 			} else if (mimeType.startsWith("image")){
 				
 				try
 				{
-					icon.setImageBitmap(getPreview(f));
+					holder.icon.setImageBitmap(getPreview(f));
 				}
 				catch (Exception e)
 				{
 					Log.d(TAG,"error showing thumbnail",e);
-					icon.setImageResource(R.drawable.text);	
+					holder.icon.setImageResource(R.drawable.text);	
 				}
 			}			
 			else if (mimeType.startsWith("audio")||f.getName().endsWith(".pcm")||f.getName().endsWith(".aac"))
 			{
-				icon.setImageResource(R.drawable.audioclip);
+				holder.icon.setImageResource(R.drawable.audioclip);
 			}
 			else if (mimeType.startsWith("video")||f.getName().endsWith(".mp4")||f.getName().endsWith(".mov"))
 			{
-				icon.setImageResource(R.drawable.videoclip);
+				holder.icon.setImageResource(R.drawable.videoclip);
 			}
 			else
 			{
-				icon.setImageResource(R.drawable.text);
+				holder.icon.setImageResource(R.drawable.text);
 			}
+				
 			
-			return (row);
+			
+			return (convertView);
 		}
 
 	}
 
-	private final static int THUMB_DIV = 8;
-	
 	private Bitmap getPreview(File fileImage) throws FileNotFoundException {
 
+		Bitmap b = mBitCache.get(fileImage.getAbsolutePath());
 		
-	    BitmapFactory.Options bounds = new BitmapFactory.Options();
-	    
-	    bounds.inJustDecodeBounds = true;
-	    BitmapFactory.decodeStream(new BufferedInputStream(new FileInputStream(fileImage)), null, bounds);
-	    
-	    if ((bounds.outWidth == -1) || (bounds.outHeight == -1))
-	        return null;
-
-//	    opts.inSampleSize = 4;//originalSize / THUMBNAIL_SIZE;	 
-	    
-	    Bitmap b = BitmapFactory.decodeStream(new BufferedInputStream(new FileInputStream(fileImage)), null, null);
-	    
-	    return Bitmap.createScaledBitmap(b, bounds.outWidth/THUMB_DIV, bounds.outWidth/THUMB_DIV, false);
+		if (b == null)
+		{
+			BitmapFactory.Options bounds = new BitmapFactory.Options();	    
+			bounds.inSampleSize = 8;	 	    
+			b = BitmapFactory.decodeStream(new FileInputStream(fileImage), null, bounds);
+			mBitCache.put(fileImage.getAbsolutePath(), b);
+		}
+		
+		return b;
 	}
 
 
