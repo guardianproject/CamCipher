@@ -45,6 +45,8 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private int mLastWidth = -1;
 	private int mLastHeight = -1;
 	private int mPreviewFormat = -1;
+
+	private ImageToMJPEGMOVMuxer muxer;
 	
 	private AACHelper aac;
 	private boolean useAAC = false;
@@ -62,6 +64,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private long start = 0;
 
 	private boolean isRequest = false;
+
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -181,20 +184,42 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		    mLastWidth = parameters.getPreviewSize().width;
 		    mLastHeight = parameters.getPreviewSize().height;
 		    
-			if (mRotation > 0)
+			if (mRotation > 0) //flip height and width
 			{
 				mLastWidth =parameters.getPreviewSize().height;
 				mLastHeight =parameters.getPreviewSize().width;
 			}
 		    
 		    mPreviewFormat = parameters.getPreviewFormat();
+		    
+		    byte[] dataResult = data;
+			
+			if (mPreCompressFrames)
+			{
+				if (mRotation > 0)
+				{
+					dataResult = rotateYUV420Degree90(data,mLastHeight,mLastWidth);
+					
+					 if (getCameraDirection() == CameraInfo.CAMERA_FACING_FRONT)
+					 {						 
+						 dataResult = rotateYUV420Degree90(dataResult,mLastWidth,mLastHeight);
+						 dataResult = rotateYUV420Degree90(dataResult,mLastHeight,mLastWidth);						 
+					 }
+					
+				}
+				
+				YuvImage yuv = new YuvImage(dataResult, mPreviewFormat, mLastWidth, mLastHeight, null);
+			    ByteArrayOutputStream out = new ByteArrayOutputStream();
+			    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), MediaConstants.sJpegQuality, out);				    
+			    dataResult = out.toByteArray();
+			}   
 			
 			
 			synchronized (mFrameQ)
 			{
 				if (data != null)
 				{
-					mFrameQ.add(data);
+					mFrameQ.add(dataResult);
 					mFramesTotal++;
 					
 					frameCounter++;
@@ -239,21 +264,18 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	    return yuv;
 	}
 
-	
-	ImageToMJPEGMOVMuxer muxer;
-	
 	private class Encoder extends Thread {
 		private static final String TAG = "ENCODER";
 
 		private File fileOut;
+		private FileOutputStream fos;
 		
 		public Encoder (File fileOut) throws IOException
 		{
 			this.fileOut = fileOut;
 
-			FileOutputStream fos = new info.guardianproject.iocipher.FileOutputStream(fileOut);
+			fos = new info.guardianproject.iocipher.FileOutputStream(fileOut);
 			SeekableByteChannel sbc = new IOCipherFileChannelWrapper(fos.getChannel());
-	        //int sampleRate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
 
 			org.jcodec.common.AudioFormat af = null;//new org.jcodec.common.AudioFormat(org.jcodec.common.AudioFormat.MONO_S16_LE(mAudioSampleRate));
 			
@@ -272,34 +294,14 @@ public class VideoCameraActivity extends CameraBaseActivity {
 					{
 						byte[] data = mFrameQ.pop();		
 						
-						byte[] dataResult = data;
-						
-						if (mPreCompressFrames)
-						{
-							if (mRotation > 0)
-							{
-								dataResult = rotateYUV420Degree90(data,mLastHeight,mLastWidth);
-								
-								 if (getCameraDirection() == CameraInfo.CAMERA_FACING_FRONT)
-								 {						 
-									 dataResult = rotateYUV420Degree90(dataResult,mLastWidth,mLastHeight);
-									 dataResult = rotateYUV420Degree90(dataResult,mLastHeight,mLastWidth);						 
-								 }
-								
-							}
-							
-							YuvImage yuv = new YuvImage(dataResult, mPreviewFormat, mLastWidth, mLastHeight, null);
-						    ByteArrayOutputStream out = new ByteArrayOutputStream();
-						    yuv.compressToJpeg(new Rect(0, 0, mLastWidth, mLastHeight), MediaConstants.sJpegQuality, out);				    
-						    dataResult = out.toByteArray();
-						}   
-						
-						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(dataResult),mFPS);						
+						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(data),mFPS);						
 					}
 
 				}
 
 				muxer.finish();
+				
+				fos.close();
 				
 				setResult(Activity.RESULT_OK, new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileOut.getAbsolutePath()));
 				
