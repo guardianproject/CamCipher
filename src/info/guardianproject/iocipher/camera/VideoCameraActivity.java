@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
@@ -65,13 +66,15 @@ public class VideoCameraActivity extends CameraBaseActivity {
 
 	private boolean isRequest = false;
 
+	private boolean mInTopHalf = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
-		button.setVisibility(View.VISIBLE);
+		button.setVisibility(View.GONE);
+		buttonSelfie.setVisibility(View.GONE);
 		
 		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_VIDEO_CAPTURE);
 
@@ -83,6 +86,83 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		return R.layout.camera;
 	}
 
+	private float mDownX = -1,mLastX = -1;
+	private float mDownY = -1,mLastY=-1;
+	private boolean mIsOnClick = false;
+	private final float SCROLL_THRESHOLD = 10;
+
+	@Override
+	public boolean onTouch(View v, MotionEvent ev) {
+		
+		//if short tap then take a picture
+		
+		//if long and hold then start video, then end on release
+		
+		//if location is on top half then front camera, on bottom have then back camera
+		
+		switch (ev.getAction() & MotionEvent.ACTION_MASK) {
+        case MotionEvent.ACTION_DOWN:
+            mDownX = ev.getX();
+            mDownY = ev.getY();
+            mIsOnClick = true;
+            handler.postDelayed(mLongPressed, 1000);
+            
+            mInTopHalf = mDownY < (mLastHeight/2);
+
+            toggleCamera(mInTopHalf);
+            
+            break;
+        case MotionEvent.ACTION_CANCEL:
+        case MotionEvent.ACTION_UP:
+            if (mIsOnClick) {
+               
+            	//take a picture
+        		mPreviewing = false;
+        		camera.takePicture(null, null, this);
+                handler.removeCallbacks(mLongPressed);
+            	
+            }
+            
+            if (mIsRecording)
+            {
+            	stopRecording();
+            }
+            
+            break;
+        case MotionEvent.ACTION_MOVE:
+        	
+        	mLastX = ev.getX();
+        	mLastY = ev.getY();
+        	
+            
+            mInTopHalf = mLastY < (mLastHeight/2);
+
+            toggleCamera(mInTopHalf);
+            
+            if (mIsOnClick && (Math.abs(mDownX - ev.getX()) > SCROLL_THRESHOLD || Math.abs(mDownY - ev.getY()) > SCROLL_THRESHOLD)) {
+                mIsOnClick = false;
+                
+                
+                
+            }
+            break;
+        default:
+            break;
+	    }
+	    return true;
+		
+	}
+	
+	final Handler handler = new Handler(); 
+	Runnable mLongPressed = new Runnable() { 
+	    public void run() { 
+	        Log.i("", "Long press!");
+	        
+	        startRecording();
+	        
+	    }   
+	};
+
 	
 	@Override
 	public void onClick(View view) {
@@ -92,55 +172,63 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			if (!mIsRecording)
 			{
 				
-				
-				mFrameQ = new ArrayDeque<byte[]>();
-				
-				mFramesTotal = 0;
-	
-				String fileName = "video" + new java.util.Date().getTime() + ".mov";
-				info.guardianproject.iocipher.File fileOut = new info.guardianproject.iocipher.File(mFileBasePath,fileName);
-				
-				try {
-					mIsRecording = true;
-					
-					if (useAAC)
-						initAudio(fileOut.getAbsolutePath()+".aac");
-					else
-						initAudio(fileOut.getAbsolutePath()+".pcm");
-					
-					new Encoder(fileOut).start();
-					//start capture
-					startAudioRecording();
-					
-					progress.setText("[REC]");
-
-				} catch (Exception e) {
-					Log.d("Video","error starting video",e);
-					Toast.makeText(this, "Error init'ing video: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-					finish();
-				}
+				startRecording();
 				
 				
 			}
 			else
 			{
-				progress.setText("[SAVING]");
-				h.sendEmptyMessageDelayed(1, 2000);
-				progress.setText("");
+				stopRecording ();
 			}
 		}
-		else
-		{
-			mPreviewing = false;
-			camera.takePicture(null, null, this);
+		
+	}
+	
+	private void startRecording ()
+	{
+		mFrameQ = new ArrayDeque<byte[]>();
+		
+		mFramesTotal = 0;
+
+		String fileName = "video" + new java.util.Date().getTime() + ".mov";
+		info.guardianproject.iocipher.File fileOut = new info.guardianproject.iocipher.File(mFileBasePath,fileName);
+		
+		try {
+			mIsRecording = true;
+			
+			if (useAAC)
+				initAudio(fileOut.getAbsolutePath()+".aac");
+			else
+				initAudio(fileOut.getAbsolutePath()+".pcm");
+			
+			new Encoder(fileOut).start();
+			//start capture
+			startAudioRecording();
+			
+			progress.setText("[REC]");
+
+		} catch (Exception e) {
+			Log.d("Video","error starting video",e);
+			Toast.makeText(this, "Error init'ing video: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+			finish();
 		}
 	}
 	
-	private void toggleCamera ()
+	private void stopRecording ()
 	{
-		mIsSelfie = !mIsSelfie;
-		releaseCamera();
-		initCamera();
+		progress.setText("[SAVING]");
+		h.sendEmptyMessageDelayed(1, 2000);
+		progress.setText("");
+	}
+	
+	private void toggleCamera (boolean isSelfie)
+	{
+		if (isSelfie != mIsSelfie)
+		{
+			mIsSelfie = isSelfie;
+			releaseCamera();
+			initCamera();
+		}
 	}
 
 	//support still pictures if you tap on the screen

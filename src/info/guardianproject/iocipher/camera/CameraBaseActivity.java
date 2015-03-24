@@ -12,15 +12,17 @@ import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-public abstract class CameraBaseActivity extends Activity implements OnClickListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
+public abstract class CameraBaseActivity extends Activity implements OnClickListener, OnTouchListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
 	
 	Button button;
 	TextView progress;
@@ -35,7 +37,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 	
 	protected boolean mPreviewing;
 
-	private final static String LOG = "Camera";
+	private final static String LOG = "CipherCam";
 
 	protected int mRotation = 0;
 
@@ -77,6 +79,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		
 		view.setOnClickListener(this);
 				
+		view.setOnTouchListener(this);
 	}
 
 	protected int getLayout()
@@ -152,7 +155,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 				 List<Camera.Size> supportedPreviewSizes =  camera.getParameters().getSupportedPreviewSizes();
 				 List<Camera.Size> supportedPictureSize = camera.getParameters().getSupportedPictureSizes();
 				 
-				 int previewQuality = 4;
+				 int previewQuality = 5;
 				 
 				 params.setPreviewSize(supportedPreviewSizes.get(previewQuality).width, supportedPreviewSizes.get(previewQuality).height);
 				 params.setPictureSize(supportedPictureSize.get(1).width, supportedPictureSize.get(1).height);
@@ -197,7 +200,8 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-					
+					//start video
+			        
 		    	 return true;
 		     }
 	     }
@@ -275,6 +279,15 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 			camera.takePicture(null, null, this);
 		}
 	}
+	
+
+	@Override
+	public boolean onTouch(View v, MotionEvent event) {
+		
+		return false;
+	}
+
+	
 
 	private void toggleCamera ()
 	{

@@ -13,6 +13,7 @@ import android.hardware.Camera.CameraInfo;
 import android.media.ExifInterface;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.MotionEvent;
 import android.view.View;
 
 public class StillCameraActivity extends CameraBaseActivity {
@@ -77,5 +78,4 @@ public class StillCameraActivity extends CameraBaseActivity {
 
 	}
 
-	
 }
