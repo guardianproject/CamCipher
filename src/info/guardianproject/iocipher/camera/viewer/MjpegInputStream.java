@@ -3,13 +3,13 @@ package info.guardianproject.iocipher.camera.viewer;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 public class MjpegInputStream extends DataInputStream {
     private static final String TAG = "MjpegInputStream";
@@ -17,8 +17,8 @@ public class MjpegInputStream extends DataInputStream {
     private final byte[] SOI_MARKER = { (byte) 0xFF, (byte) 0xD8 };
     private final byte[] EOF_MARKER = { (byte) 0xFF, (byte) 0xD9 };
     private final String CONTENT_LENGTH = "Content-Length";
-    private final static int HEADER_MAX_LENGTH = 512;
-    private final static int FRAME_MAX_LENGTH = 700000 + HEADER_MAX_LENGTH;
+    private final static int HEADER_MAX_LENGTH = 2048;
+    private final static int FRAME_MAX_LENGTH = 1000000 + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
 
     public MjpegInputStream(InputStream in) {
@@ -28,16 +28,25 @@ public class MjpegInputStream extends DataInputStream {
     private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) throws IOException {
         int seqIndex = 0;
         byte c;
-        for(int i=0; i < FRAME_MAX_LENGTH; i++) {
-            c = (byte) in.readUnsignedByte();
-            if(c == sequence[seqIndex]) {
-                seqIndex++;
-                if(seqIndex == sequence.length) {
-                    return i + 1;
-                }
-            } else {
-                seqIndex = 0;
-            }
+        int i = 0;
+        while(true) {
+        	try
+        	{
+	            c = (byte) in.readUnsignedByte();
+	            if(c == sequence[seqIndex]) {
+	                seqIndex++;
+	                if(seqIndex == sequence.length) {
+	                    return i + 1;
+	                }
+	            } else {
+	                seqIndex = 0;
+	            }
+	            i++;
+        	}
+        	catch (EOFException ef)
+        	{
+        		break;
+        	}
         }
         return -1;
     }
@@ -56,8 +65,8 @@ public class MjpegInputStream extends DataInputStream {
 
     public Bitmap readMjpegFrame() throws IOException {
     	
-    	if (in.available() < FRAME_MAX_LENGTH)
-    		return null;
+    	//if (in.available() < FRAME_MAX_LENGTH)
+    		//return null;
     	
         mark(FRAME_MAX_LENGTH);
         int headerLen = getStartOfSequence(this, SOI_MARKER);
