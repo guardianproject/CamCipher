@@ -5,6 +5,7 @@ import info.guardianproject.cacheword.ICacheWordSubscriber;
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
+import info.guardianproject.iocipher.VirtualFileSystem;
 import info.guardianproject.iocipher.camera.io.IOCipherContentProvider;
 import info.guardianproject.iocipher.camera.viewer.ImageViewerActivity;
 import info.guardianproject.iocipher.camera.viewer.MjpegViewerActivity;
@@ -628,6 +629,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 						((IconicList)gridview.getAdapter()).notifyDataSetChanged();
 					}
 				});
+				
+				//VirtualFileSystem.get().detachThread();
 		    
 			} catch (Exception e) {
 				Log.e(TAG,"error decoding bitmap preview",e);
