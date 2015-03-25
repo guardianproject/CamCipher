@@ -55,7 +55,6 @@ public class ImageToMJPEGMOVMuxer {
 
     }
 
-    
     public void addFrame(int width, int height, ByteBuffer buff, int timeScaleFPS) throws IOException {
         if (size == null) {
             size = new Size(width,height);            

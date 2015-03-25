@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.SeekableByteChannel;
 
 import android.app.Activity;
@@ -365,10 +366,9 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			fos = new info.guardianproject.iocipher.FileOutputStream(fileOut);
 			SeekableByteChannel sbc = new IOCipherFileChannelWrapper(fos.getChannel());
 
-			org.jcodec.common.AudioFormat af = null;//new org.jcodec.common.AudioFormat(org.jcodec.common.AudioFormat.MONO_S16_LE(mAudioSampleRate));
+			org.jcodec.common.AudioFormat af = null;//new org.jcodec.common.AudioFormat(org.jcodec.common.AudioFormat.MONO_S16_LE(MediaConstants.sAudioSampleRate));
 			
-			muxer = new ImageToMJPEGMOVMuxer(sbc,af);
-			
+			muxer = new ImageToMJPEGMOVMuxer(sbc,af);			
 		}
 		
 		public void run ()
@@ -380,9 +380,10 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				{
 					if (mFrameQ.peek() != null)
 					{
-						byte[] data = mFrameQ.pop();		
+						byte[] data = mFrameQ.pop();
 						
-						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(data),mFPS);						
+						muxer.addFrame(mLastWidth, mLastHeight, ByteBuffer.wrap(data),mFPS);	
+						
 					}
 
 				}
@@ -503,7 +504,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		                try {
 		                	outputStreamAudio.write(audioData,0,audioDataBytes);
 		                	
-		                //	muxer.addAudio(ByteBuffer.wrap(audioData));
+		                	//muxer.addAudio(ByteBuffer.wrap(audioData, 0, audioData.length));
 		                } catch (IOException e) {
 		                    e.printStackTrace();
 		                }

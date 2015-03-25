@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 public class MjpegInputStream extends DataInputStream {
     private static final String TAG = "MjpegInputStream";
@@ -76,6 +77,7 @@ public class MjpegInputStream extends DataInputStream {
         
         reset();
         byte[] header = new byte[headerLen];
+   //     Log.d(TAG,"frame header: " + new String(header));
         readFully(header);
         mContentLength = getEndOfSeqeunce(this, EOF_MARKER); 
         
