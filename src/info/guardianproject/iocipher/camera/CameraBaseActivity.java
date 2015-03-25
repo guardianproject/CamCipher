@@ -3,13 +3,17 @@ package info.guardianproject.iocipher.camera;
 import java.io.IOException;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
+import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -41,6 +45,9 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 
 	protected int mRotation = 0;
 
+	private int mPreviewWidth = -1;
+	private int mPreviewHeight = -1;
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -135,6 +142,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		return (facing == CameraInfo.CAMERA_FACING_BACK) ? CameraInfo.CAMERA_FACING_FRONT : CameraInfo.CAMERA_FACING_BACK;
 	}
 	
+	@SuppressLint("NewApi")
 	private boolean tryCreateCamera(int facing)
 	{
 	     Camera.CameraInfo info = new Camera.CameraInfo();
@@ -151,25 +159,39 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 				 
 				 mRotation = setCameraDisplayOrientation(this,nCam,camera);
 				 
-				 
 				 List<Camera.Size> supportedPreviewSizes =  camera.getParameters().getSupportedPreviewSizes();
 				 List<Camera.Size> supportedPictureSize = camera.getParameters().getSupportedPictureSizes();
 				 
 				 int previewQuality = 5;
 				 
-				 params.setPreviewSize(supportedPreviewSizes.get(previewQuality).width, supportedPreviewSizes.get(previewQuality).height);
-				 params.setPictureSize(supportedPictureSize.get(1).width, supportedPictureSize.get(1).height);
+				 if (mPreviewWidth == -1)
+					 mPreviewWidth = supportedPreviewSizes.get(previewQuality).width;
 				 
-				 int previewWidth = supportedPreviewSizes.get(previewQuality).width;
-				 int previewHeight = supportedPreviewSizes.get(previewQuality).height;
+				 if (mPreviewHeight == -1)
+					 mPreviewHeight = supportedPreviewSizes.get(previewQuality).height;
+				 
+				 params.setPreviewSize(mPreviewWidth, mPreviewHeight);
+				 
+				 params.setPictureSize(supportedPictureSize.get(1).width, supportedPictureSize.get(1).height);
 				 
 				 if (this.getCameraDirection() == CameraInfo.CAMERA_FACING_BACK)
 				 {
-					 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+					 if (getPackageManager().hasSystemFeature(
+					            PackageManager.FEATURE_CAMERA_AUTOFOCUS))
+					        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+					            params.setFocusMode(Parameters.FOCUS_MODE_AUTO);
+					        } 
+					 
 					 
 					 if (mRotation > 0)
 						 params.setRotation(mRotation);
 
+					 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+						 if (params.isVideoStabilizationSupported())
+							 params.setVideoStabilization(true);
+						 
+					 }
+					 
 				 }
 				 else
 				 {
@@ -177,7 +199,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 						 params.setRotation(360-mRotation);
 				 }
 									
-					camera.setParameters(params);
+				 camera.setParameters(params);
 				
 					/*
 	                for (int i = 0; i < BUFFER_COUNT; i++) {

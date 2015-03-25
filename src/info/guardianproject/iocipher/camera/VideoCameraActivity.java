@@ -135,7 +135,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
         	mLastY = ev.getY();
         	
             
-            mInTopHalf = mLastY < (mLastHeight/2);
+            mInTopHalf = mLastY < (mDownY-100);
 
             toggleCamera(mInTopHalf);
             
