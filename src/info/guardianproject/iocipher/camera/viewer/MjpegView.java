@@ -41,8 +41,10 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     private int dispWidth;
     private int dispHeight;
     private int displayMode;
+    
+    private int frameDelay = 0;
 
-    public class MjpegViewThread extends Thread {
+	public class MjpegViewThread extends Thread {
         private SurfaceHolder mSurfaceHolder;
         private int frameCounter = 0;
         private long start;
@@ -142,6 +144,10 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
                                         ovl = makeFpsOverlay(overlayPaint, fps);
                                     }
                                 }
+                                
+                                if (frameDelay > 0)
+                                	Thread.sleep(frameDelay);
+                                
                             } catch (Exception e) {
                                 e.getStackTrace();
                                 Log.d(TAG, "catch IOException hit in run", e);
@@ -245,4 +251,13 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     public void setDisplayMode(int s) { 
         displayMode = s; 
     }
+
+    public int getFrameDelay() {
+		return frameDelay;
+	}
+
+	public void setFrameDelay(int frameDelay) {
+		this.frameDelay = frameDelay;
+	}
+
 }

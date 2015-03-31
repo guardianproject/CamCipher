@@ -37,17 +37,21 @@ public class ImageToMJPEGMOVMuxer {
     private String imageType = "jpeg "; //or "png ";
     private AudioFormat af = null;
     
-    private int timeScale = 20;
+    private int framesPerSecond = -1;
     
-    public ImageToMJPEGMOVMuxer(SeekableByteChannel ch, AudioFormat af) throws IOException {
-        this.ch = ch;
+    private final static String ENCODER_NAME = "JCODEC";
+    
+    public ImageToMJPEGMOVMuxer(SeekableByteChannel ch, AudioFormat af, int framesPerSecond) throws IOException {
+        
+    	this.ch = ch;
         this.af = af;
+        this.framesPerSecond = framesPerSecond;
         
         // Muxer that will store the encoded frames
         muxer = new WebOptimizedMP4Muxer(ch, Brand.MOV, 16000);
 
         // Add video track to muxer
-        videoTrack = muxer.addTrack(TrackType.VIDEO, timeScale);
+        videoTrack = muxer.addTrack(TrackType.VIDEO, framesPerSecond);
     //    videoTrack.setTgtChunkDuration(new Rational(2, 1), Unit.SEC);
         
        if (af != null)
@@ -55,10 +59,10 @@ public class ImageToMJPEGMOVMuxer {
 
     }
 
-    public void addFrame(int width, int height, ByteBuffer buff, int timeScaleFPS) throws IOException {
+    public void addFrame(int width, int height, ByteBuffer buff, long timeScaleFPS, long duration) throws IOException {
         if (size == null) {
             size = new Size(width,height);            
-            videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry(imageType, size, "JCodec"));
+            videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry(imageType, size, ENCODER_NAME));
            
             if (af != null)
             	audioTrack.addSampleEntry(MP4Muxer.audioSampleEntry(af));	            
@@ -66,7 +70,7 @@ public class ImageToMJPEGMOVMuxer {
         
         // Add packet to video track
      
-        videoTrack.addFrame(new MP4Packet(buff, frameNo, timeScaleFPS, 1, frameNo, true, null, frameNo, 0));
+        videoTrack.addFrame(new MP4Packet(buff, frameNo, timeScaleFPS, duration, frameNo, true, null, frameNo, 0));
 
         frameNo++;
     }
@@ -77,12 +81,10 @@ public class ImageToMJPEGMOVMuxer {
     }
 
     public void finish() throws IOException {
-        // Push saved SPS/PPS to a special storage in MP4
-      //  videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry("png ", size, "JCodec"));
-    	  videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry(imageType, size, "JCodec"));
+    	
+    	  videoTrack.addSampleEntry(MP4Muxer.videoSampleEntry(imageType, size, ENCODER_NAME));
           
-        // Write MP4 header and finalize recording
-    	  
+        // Write MP4 header and finalize recording  
     	  if (af != null)
     		  audioTrack.addSampleEntry(MP4Muxer.audioSampleEntry(af));
     	  

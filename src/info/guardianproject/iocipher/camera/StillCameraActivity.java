@@ -44,6 +44,7 @@ public class StillCameraActivity extends CameraBaseActivity {
 	public void onPictureTaken(final byte[] data, Camera camera) {		
 		File fileSecurePicture;
 		try {
+			
 			long mTime = System.currentTimeMillis();
 			fileSecurePicture = new File(mFileBasePath,"secureselfie_" + mTime + ".jpg");
 

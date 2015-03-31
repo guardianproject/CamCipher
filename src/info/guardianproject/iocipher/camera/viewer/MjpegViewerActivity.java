@@ -49,8 +49,9 @@ public class MjpegViewerActivity extends Activity {
         try {
 
 	        mv.setDisplayMode(MjpegView.SIZE_BEST_FIT);
-	     //   mv.showFps(true);
-
+	        //mv.showFps(false);
+	        mv.setFrameDelay(5); //we need to better sync each frame to the audio
+	        
 			File fileAudio = null;
 			
 			if (ioCipherAudioPath == null)
@@ -117,6 +118,7 @@ public class MjpegViewerActivity extends Activity {
 	        at = new AudioTrack(AudioManager.STREAM_MUSIC, MediaConstants.sAudioSampleRate,
 	        		MediaConstants.sChannelConfigOut, AudioFormat.ENCODING_PCM_16BIT,
 	            minBufferSize, AudioTrack.MODE_STREAM);
+	        
     	}
          
     }
