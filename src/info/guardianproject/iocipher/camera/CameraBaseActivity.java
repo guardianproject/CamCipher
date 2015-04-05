@@ -65,7 +65,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		button = (Button) findViewById(R.id.surface_grabber_button);
 		button.setOnClickListener(this);
 		
-		buttonSelfie = (Button)findViewById(R.id.tbSelfie);
+		buttonSelfie = (Button)findViewById(R.id.selfie_button);
 		buttonSelfie.setOnClickListener(new OnClickListener()
 		{
 
@@ -91,7 +91,7 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 
 	protected int getLayout()
 	{
-		return R.layout.camera;
+		return R.layout.base_camera;
 	}
 	
 

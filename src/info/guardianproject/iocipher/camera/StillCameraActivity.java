@@ -29,17 +29,11 @@ public class StillCameraActivity extends CameraBaseActivity {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
-		button.setVisibility(View.GONE);//we don't need a shutter button - the user can just tap on the screen!
+		//button.setVisibility(View.GONE);//we don't need a shutter button - the user can just tap on the screen!
 		
 		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_IMAGE_CAPTURE);
 	}
 
-	@Override
-	protected int getLayout()
-	{
-		return R.layout.camera;
-	}
-	
 	@Override
 	public void onPictureTaken(final byte[] data, Camera camera) {		
 		File fileSecurePicture;

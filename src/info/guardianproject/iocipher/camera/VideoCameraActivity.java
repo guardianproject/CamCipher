@@ -74,8 +74,8 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
-		button.setVisibility(View.GONE);
-		buttonSelfie.setVisibility(View.GONE);
+		//button.setVisibility(View.GONE);
+		//buttonSelfie.setVisibility(View.GONE);
 		
 		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_VIDEO_CAPTURE);
 
@@ -84,7 +84,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	@Override
 	protected int getLayout()
 	{
-		return R.layout.camera;
+		return R.layout.base_camera;
 	}
 
 	private float mDownX = -1,mLastX = -1;

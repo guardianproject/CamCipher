@@ -5,7 +5,6 @@ import info.guardianproject.cacheword.ICacheWordSubscriber;
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
-import info.guardianproject.iocipher.VirtualFileSystem;
 import info.guardianproject.iocipher.camera.io.IOCipherContentProvider;
 import info.guardianproject.iocipher.camera.viewer.ImageViewerActivity;
 import info.guardianproject.iocipher.camera.viewer.MjpegViewerActivity;
@@ -66,6 +65,9 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private final static int REQUEST_TAKE_PICTURE = 1000;
 	private final static int REQUEST_TAKE_VIDEO = 1001;
 	
+	private final static String ACTION_SECURE_STILL_IMAGE_CAMERA = "info.guardianproject.action.SECURE_STILL_IMAGE_CAMERA";
+	private final static String ACTION_SECURE_SECURE_VIDEO_CAMERA = "info.guardianproject.action.SECURE_VIDEO_CAMERA";
+	
 	private Handler h = new Handler();//for UI event handling
 	
 	 /** Called when the activity is first created. */
@@ -77,7 +79,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
 				WindowManager.LayoutParams.FLAG_SECURE);
 
-		setContentView(R.layout.main);
+		setContentView(R.layout.activity_gallery);
 		
 		gridview = (GridView) findViewById(R.id.gridview);
 
@@ -96,7 +98,9 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				handleSendUri(intent.getData());
 			}
 		}
-		else if (MediaStore.ACTION_IMAGE_CAPTURE.equals(action))
+		else if (MediaStore.ACTION_IMAGE_CAPTURE.equals(action)
+				|| ACTION_SECURE_STILL_IMAGE_CAMERA.equals(action)
+				)
 		{
 			//REQUEST_TAKE_PICTURE
 
@@ -106,7 +110,9 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			intentCapture.putExtra("selfie", false);
 			startActivityForResult(intentCapture, REQUEST_TAKE_PICTURE);
 		}		
-		else if (MediaStore.ACTION_VIDEO_CAPTURE.equals(action))
+		else if (MediaStore.ACTION_VIDEO_CAPTURE.equals(action)
+				|| ACTION_SECURE_SECURE_VIDEO_CAMERA.equals(action)
+				)
 		{
 			//REQUEST_TAKE_VIDEO
 			Intent intentCapture = new Intent(this,VideoCameraActivity.class);
@@ -171,8 +177,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);
 				String mimeType = "video/*";				
 				data.setDataAndType(uri, mimeType);
-				data.putExtra(Intent.EXTRA_STREAM, uri);
-	        	
+				
 	        	setResult(resultCode,data);
 	        	finish();
 	        }
@@ -220,12 +225,14 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 		super.onPause();
 		
 
-		mCacheWord.reattach();
+		mCacheWord.detach();
+		
 	}
 
 	protected void onDestroy() {
 		super.onDestroy();
 		
+		mCacheWord.disconnectFromService();
 	}
 	
 	@Override
@@ -243,29 +250,22 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
     	
     	Intent intent = null;
     	
-        switch (item.getItemId()) {
-
-        case R.id.menu_camera:
-        	
-        	intent = new Intent(this,StillCameraActivity.class);
-        	intent.putExtra("basepath", "/");
-        	intent.putExtra("selfie", false);
-        	startActivityForResult(intent, 1);
-        	
-        	return true;
-        	
-        case R.id.menu_video:
-        	
-        	intent = new Intent(this,VideoCameraActivity.class);
-        	intent.putExtra("basepath", "/");
-        	intent.putExtra("selfie", false);
-        	startActivityForResult(intent, 1);
-        	
-        	return true;
-        	
-        case R.id.menu_lock:
-        	
-        	if (StorageManager.isStorageMounted())
+        int itemId = item.getItemId();
+        
+		if (itemId == R.id.menu_camera) {
+			intent = new Intent(this,StillCameraActivity.class);
+			intent.putExtra("basepath", "/");
+			intent.putExtra("selfie", false);
+			startActivityForResult(intent, 1);
+			return true;
+		} else if (itemId == R.id.menu_video) {
+			intent = new Intent(this,VideoCameraActivity.class);
+			intent.putExtra("basepath", "/");
+			intent.putExtra("selfie", false);
+			startActivityForResult(intent, 1);
+			return true;
+		} else if (itemId == R.id.menu_lock) {
+			if (StorageManager.isStorageMounted())
     		{
     			//if storage is mounted, then we should lock it
     			boolean unmounted = StorageManager.unmountStorage();
@@ -279,10 +279,8 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
     				mCacheWord.lock();
     			}
     		}
-        	
-        	
-        	return true;
-        }	
+			return true;
+		}	
         
         return false;
     }
@@ -507,7 +505,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	class IconicList extends ArrayAdapter<Object> {
 
 		public IconicList() {
-			super(GalleryActivity.this, R.layout.row, items);
+			super(GalleryActivity.this, R.layout.gallery_gridsq, items);
 		}
 
 		public View getView(int position, View convertView, ViewGroup parent) {
@@ -516,7 +514,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			ViewHolder holder = null;
 			
 			if (convertView == null)
-				convertView = inflater.inflate(R.layout.gridsq, null);							
+				convertView = inflater.inflate(R.layout.gallery_gridsq, null);							
 			else 
 				holder = (ViewHolder)convertView.getTag();
 			
