@@ -314,7 +314,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 					
 					VideoFrame vf = new VideoFrame();
 					vf.image = dataResult;
-					vf.duration = System.currentTimeMillis() - lastTime;
+					vf.duration = 1;//this is frame duration, not time //System.currentTimeMillis() - lastTime;
 					vf.fps = mFPS;
 					
 					mFrameQ.add(vf);
