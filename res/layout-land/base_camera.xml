@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:layout_height="match_parent" >
     <SurfaceView
         android:id="@+id/surface_grabber_holder"
         android:layout_width="fill_parent"
@@ -12,7 +11,7 @@
         android:id="@+id/surface_grabber_progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_margin="10dip"
         android:layout_marginRight="35dp"
@@ -24,23 +23,13 @@
         />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
-        
-        android:orientation="horizontal"
-		android:gravity="right"      
-		android:padding="6dp"
-         >
-
-        <Button 
-		    android:id="@+id/tbSelfie"
-		    android:layout_width="48dp"
-            android:layout_height="48dp"	    
-		    android:background="@drawable/ic_action_switch_camera"
-		    
-		    />
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="top"
+        android:layout_alignParentRight="true"
+        android:padding="6dp"
+       >
 
         <Button
             android:id="@+id/surface_grabber_button"
@@ -48,8 +37,18 @@
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:background="@drawable/ic_action_video"
-           
+            
              />
+        
+ 
+        	<Button 
+		    android:id="@+id/selfie_button"
+		    android:layout_width="48dp"
+            android:layout_height="48dp"	    
+		    android:background="@drawable/ic_action_switch_camera"
+		    
+		    />
+
     </LinearLayout>
 
 </RelativeLayout>
