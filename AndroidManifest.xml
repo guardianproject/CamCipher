@@ -10,7 +10,7 @@
         <uses-permission android:name="android.permission.CAMERA" />
         <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     	<uses-permission android:name="android.permission.RECORD_AUDIO" />
-     
+     <!-- 
     <application
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -46,6 +46,16 @@
                 <action android:name="android.media.action.VIDEO_CAPTURE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            
+            <intent-filter>                
+				<action android:name="info.guardianproject.action.SECURE_STILL_IMAGE_CAMERA" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>                
+				<action android:name="info.guardianproject.action.SECURE_VIDEO_CAMERA" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+                
             
             
             <intent-filter>
@@ -90,5 +100,6 @@
             android:enabled="true"
             android:exported="false" />
     </application>
+     -->
 
 </manifest>
