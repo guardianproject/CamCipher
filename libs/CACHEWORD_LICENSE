@@ -1,14 +1,13 @@
-This file contains the license for IOCipher Camera Library "CipherCam".
+This file contains the license for CacheWord.
 
-For more information about IOCipher, see https://guardianproject.info/code/iocipher
-and this sample library: https://github.com/n8fr8/IOCipherCameraExample
+For more information about CacheWord, see https://guardianproject.info/
 
 If you got this file as a part of a larger bundle, there may be other
 license terms that you should be aware of.
 ===============================================================================
-IOCipher Camera Sample is distributed under this license (aka the 3-clause BSD license)
+CacheWord is distributed under this license (aka the 3-clause BSD license)
 
-Copyright (C) 2014-2014 Nathan Freitas <nathan@guardianproject.info>
+Copyright (C) 2013-2014 Abel Luck <abel@guardianproject.info>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
