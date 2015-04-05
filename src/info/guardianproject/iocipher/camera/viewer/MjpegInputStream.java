@@ -18,7 +18,7 @@ public class MjpegInputStream extends DataInputStream {
     private final byte[] SOI_MARKER = { (byte) 0xFF, (byte) 0xD8 };
     private final byte[] EOF_MARKER = { (byte) 0xFF, (byte) 0xD9 };
     private final String CONTENT_LENGTH = "Content-Length";
-    private final static int HEADER_MAX_LENGTH = 2048;
+    private final static int HEADER_MAX_LENGTH = 2048*4;
     private final static int FRAME_MAX_LENGTH = 1000000 + HEADER_MAX_LENGTH;
     private int mContentLength = -1;
 
@@ -27,6 +27,7 @@ public class MjpegInputStream extends DataInputStream {
     }
 
     private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) throws IOException {
+    	
         int seqIndex = 0;
         byte c;
         int i = 0;
@@ -46,6 +47,7 @@ public class MjpegInputStream extends DataInputStream {
         	}
         	catch (EOFException ef)
         	{
+        		Log.e(TAG,"EOF Exception at idx:" + i);
         		break;
         	}
         }

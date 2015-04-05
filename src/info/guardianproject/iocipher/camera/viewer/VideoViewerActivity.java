@@ -48,7 +48,7 @@ super.onCreate(icicle);
 				WindowManager.LayoutParams.FLAG_SECURE);
 		
 		
-setContentView(R.layout.video);
+setContentView(R.layout.videoview);
 mPreview = (SurfaceView) findViewById(R.id.surface_video);
 holder = mPreview.getHolder();
 holder.addCallback(this);

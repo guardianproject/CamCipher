@@ -110,7 +110,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
             Rect destRect;
             Canvas c = null;
             Paint p = new Paint();
-            String fps;
+
             while (mRun) {
                 if(surfaceDone) {
                     try {
@@ -137,20 +137,15 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
                                     }
                                     p.setXfermode(null);
                                     frameCounter++;
-                                    if((System.currentTimeMillis() - start) >= 1000) {
-                                        fps = String.valueOf(frameCounter)+" fps";
-                                        frameCounter = 0; 
-                                        start = System.currentTimeMillis();
-                                        ovl = makeFpsOverlay(overlayPaint, fps);
-                                    }
+                                    
                                 }
                                 
                                 if (frameDelay > 0)
                                 	Thread.sleep(frameDelay);
                                 
+                                
                             } catch (Exception e) {
-                                e.getStackTrace();
-                                Log.d(TAG, "catch IOException hit in run", e);
+                                Log.e(TAG, "catch IOException hit in run", e);
                             }
                         }
                     } finally { 
