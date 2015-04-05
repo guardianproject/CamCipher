@@ -39,7 +39,7 @@ public class ImageViewerActivity extends Activity {
 		decorView.setSystemUiVisibility(uiOptions);
 		
 	        
-		setContentView(R.layout.image);
+		setContentView(R.layout.pzsimageview);
 		
 		Intent intent = getIntent();
 		String action = intent.getAction();
