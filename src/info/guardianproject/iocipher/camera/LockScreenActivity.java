@@ -1,3 +1,16 @@
+/**
+ * 
+ * This file contains code from the IOCipher Camera Library "CipherCam".
+ *
+ * For more information about IOCipher, see https://guardianproject.info/code/iocipher
+ * and this sample library: https://github.com/n8fr8/IOCipherCameraExample
+ *
+ * IOCipher Camera Sample is distributed under this license (aka the 3-clause BSD license)
+ *
+ * @author n8fr8
+ * 
+ */
+
 package info.guardianproject.iocipher.camera;
 
 import info.guardianproject.cacheword.CacheWordHandler;

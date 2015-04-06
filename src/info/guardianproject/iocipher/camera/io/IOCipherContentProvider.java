@@ -1,5 +1,19 @@
 package info.guardianproject.iocipher.camera.io;
-
+/**
+ * 
+ * This file contains code from the IOCipher Camera Library "CipherCam".
+ *
+ * For more information about IOCipher, see https://guardianproject.info/code/iocipher
+ * and this sample library: https://github.com/n8fr8/IOCipherCameraExample
+ *
+ * IOCipher Camera Sample is distributed under this license (aka the 3-clause BSD license)
+ *
+ * Some of this class was originally part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author n8fr8, The JCodec project
+ * 
+ */
 // inspired by https://github.com/commonsguy/cw-omnibus/tree/master/ContentProvider/Pipe
 
 import info.guardianproject.iocipher.File;

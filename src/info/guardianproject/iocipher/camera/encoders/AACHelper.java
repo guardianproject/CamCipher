@@ -1,6 +1,7 @@
 package info.guardianproject.iocipher.camera.encoders;
 
 import java.io.IOException;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -16,7 +17,21 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder.AudioSource;
 import android.os.Build;
 import android.util.Log;
-
+/**
+ * 
+ * This file contains code from the IOCipher Camera Library "CipherCam".
+ *
+ * For more information about IOCipher, see https://guardianproject.info/code/iocipher
+ * and this sample library: https://github.com/n8fr8/IOCipherCameraExample
+ *
+ * IOCipher Camera Sample is distributed under this license (aka the 3-clause BSD license)
+ *
+ * Some of this class was originally part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author n8fr8, The JCodec project
+ * 
+ */
 //from here: http://stackoverflow.com/questions/21804390/pcm-aac-encoder-pcmdecoder-in-real-time-with-correct-optimization
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)

@@ -13,10 +13,18 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mkv.muxer.MKVMuxerTrack;
 
 /**
- * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * 
+ * This file contains code from the IOCipher Camera Library "CipherCam".
+ *
+ * For more information about IOCipher, see https://guardianproject.info/code/iocipher
+ * and this sample library: https://github.com/n8fr8/IOCipherCameraExample
+ *
+ * IOCipher Camera Sample is distributed under this license (aka the 3-clause BSD license)
+ *
+ * Some of this class was originally part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author The JCodec project
+ * @author n8fr8, The JCodec project
  * 
  */
 public class YUVtoWebmMuxer {
