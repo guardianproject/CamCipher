@@ -19,7 +19,12 @@ import java.util.List;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.ImageFormat;
+import android.graphics.Picture;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
@@ -37,7 +42,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.larvalabs.svgandroid.SVG;
+import com.larvalabs.svgandroid.SVGParser;
 
 public abstract class CameraBaseActivity extends Activity implements OnClickListener, OnTouchListener, SurfaceHolder.Callback, PictureCallback, PreviewCallback {
 	
@@ -51,6 +60,8 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 	SurfaceHolder holder;
 	Camera camera;
 	CameraInfo cameraInfo;
+	
+	View overlayView;
 	
 	protected boolean mPreviewing;
 
@@ -66,7 +77,6 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// This example uses decor view, but you can use any visible view.
 		View decorView = getWindow().getDecorView();
 		int uiOptions = View.SYSTEM_UI_FLAG_LOW_PROFILE;
 		decorView.setSystemUiVisibility(uiOptions);
@@ -91,8 +101,10 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		});
 		
 		progress = (TextView) findViewById(R.id.surface_grabber_progress);
-		
 		view = (SurfaceView) findViewById(R.id.surface_grabber_holder);
+		overlayView = findViewById(R.id.overlay_view);
+	        
+		  
 		holder = view.getHolder();
 		holder.addCallback(this);
 		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -100,8 +112,35 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		view.setOnClickListener(this);
 				
 		view.setOnTouchListener(this);
+		
 	}
+	
+	/*
+	private void setOverlayImage (String path)
+    {
+        try 
+        {
+        	
+        	Bitmap bitmap = Bitmap.createBitmap(overlayView.getWidth(),overlayView.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            
+            SVG svg = SVGParser.getSVGFromAsset(getAssets(), path);
 
+            Rect rBounds = new Rect(0,0,overlayView.getWidth(),overlayView.getHeight());
+            Picture p = svg.getPicture();                       
+            canvas.drawPicture(p, rBounds);            
+            
+            overlayView.setImageBitmap( bitmap);
+        }
+        catch(IOException ex) 
+        {
+        	Log.e("BaseCamera","error rendering overlay",ex);
+            return;
+        }
+        
+    }*/
+    
+	
 	protected int getLayout()
 	{
 		return R.layout.base_camera;
@@ -271,8 +310,12 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-		camera.startPreview();
-		mPreviewing = true;
+		
+		if (camera != null)
+		{
+			camera.startPreview();
+			mPreviewing = true;
+		}
 	}
 
 	protected Size choosePictureSize(List<Size> localSizes)
@@ -380,4 +423,15 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 	     
 	     return result;
 	 }
+	
+
+	   @Override
+	   public void onConfigurationChanged(Configuration newConfig) {
+	           super.onConfigurationChanged(newConfig);
+
+	           releaseCamera ();
+	           initCamera();
+	   }
+	
+	
 }

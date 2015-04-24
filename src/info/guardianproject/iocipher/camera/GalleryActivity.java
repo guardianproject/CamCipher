@@ -83,7 +83,10 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	
 	private Handler h = new Handler();//for UI event handling
 	
-	 /** Called when the activity is first created. */
+	private boolean mUseBuiltInLockScreen = false;
+	
+
+	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -171,31 +174,53 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == RESULT_OK)
+       
+        if (requestCode == REQUEST_TAKE_PICTURE)
         {
-	        if (requestCode == REQUEST_TAKE_PICTURE)
-	        {
-	        	String ioCipherFile = data.getExtras().getString(MediaStore.EXTRA_OUTPUT);
-	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);	        		        
-				String mimeType = "image/*";				
-				data.setDataAndType(uri, mimeType);
-				data.putExtra(Intent.EXTRA_STREAM, uri);
+        	 if (resultCode == RESULT_OK)
+             {
+	        	String[] ioCipherFile = data.getExtras().getStringArray(MediaStore.EXTRA_OUTPUT);
 	        	
-	        	setResult(resultCode,data);	
-	        	finish();
-	        }
-	        else if (requestCode == REQUEST_TAKE_VIDEO)
-	        {
-	        	String ioCipherFile = data.getExtras().getString(MediaStore.EXTRA_OUTPUT);
-	        	Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + ioCipherFile);
-				String mimeType = "video/*";				
-				data.setDataAndType(uri, mimeType);
-				
-	        	setResult(resultCode,data);
-	        	finish();
-	        }
-	        
+	        	if (ioCipherFile != null && ioCipherFile.length > 0)
+	        	{
+	        		String sharePath = IOCipherContentProvider.addShare(ioCipherFile[0], IOCipherContentProvider.DEFAULT_AUTHORITY);
+		        	Uri uri = Uri.parse(sharePath);	        		        
+					String mimeType = "image/*";				
+					data.setDataAndType(uri, mimeType);
+					data.putExtra(Intent.EXTRA_STREAM, uri);					
+					data.putExtra(MediaStore.EXTRA_OUTPUT, ioCipherFile);
+
+					setResult(resultCode,data);	
+	        	}
+             }
+        	 
+        	 finish();
+        	
+			
         }
+        else if (requestCode == REQUEST_TAKE_VIDEO)
+        {
+        	 if (resultCode == RESULT_OK)
+             {
+	        	String[] ioCipherFile = data.getExtras().getStringArray(MediaStore.EXTRA_OUTPUT);
+	        	
+	        	if (ioCipherFile != null && ioCipherFile.length > 0)
+	        	{
+	        		String sharePath = IOCipherContentProvider.addShare(ioCipherFile[0], IOCipherContentProvider.DEFAULT_AUTHORITY);
+		        	Uri uri = Uri.parse(sharePath);	  
+					String mimeType = "video/*";				
+					data.setDataAndType(uri, mimeType);
+					data.putExtra(Intent.EXTRA_STREAM, uri);
+					data.putExtra(MediaStore.EXTRA_OUTPUT, ioCipherFile);
+
+		        	setResult(resultCode,data);
+	        	}
+             }
+        	 
+        	 finish();
+        }
+	        
+        
         
         getFileList(root);
         
@@ -227,9 +252,13 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			Log.d(TAG,"error disconnecting from cacheword service",iae);
 		}
 		
-		Intent intent = new Intent(this,LockScreenActivity.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		startActivity(intent);
+		if (mUseBuiltInLockScreen)
+		{
+			Intent intent = new Intent(this,LockScreenActivity.class);
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+		}
+		
 		finish();
 	}
 
@@ -440,7 +469,9 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 									int which) {
 								
 								//Log.i(TAG,"open URL: " + Uri.parse(IOCipherContentProvider.FILES_URI + file.getName()));
-								Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
+								String sharePath = IOCipherContentProvider.addShare(file.getName(), IOCipherContentProvider.DEFAULT_AUTHORITY);
+					        	Uri uri = Uri.parse(sharePath);	  
+								
 								
 								//java.io.File exportFile = exportToDisk(file);
 								//Uri uriExport = Uri.fromFile(exportFile);
@@ -496,7 +527,9 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 				
 			}
 			else {
-			  Uri uri = Uri.parse(IOCipherContentProvider.FILES_URI + file.getName());
+				
+			  String sharePath = IOCipherContentProvider.addShare(file.getName(), IOCipherContentProvider.DEFAULT_AUTHORITY);
+			  Uri uri = Uri.parse(sharePath);	  
 				
 	          Intent intent = new Intent(Intent.ACTION_VIEW);													
 			  intent.setDataAndType(uri, mimeType);
@@ -681,6 +714,11 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			
 	    }
 	}*/
+
+
+	 public void setUseBuiltInLockScreen(boolean useBuiltInLockScreen) {
+		this.mUseBuiltInLockScreen = useBuiltInLockScreen;
+	}
 
 
 	

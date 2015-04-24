@@ -26,12 +26,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.SeekableByteChannel;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
@@ -72,25 +75,33 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	private OutputStream outputStreamAudio;
 	private info.guardianproject.iocipher.File fileAudio;
 
-	private int frameCounter = 0;
+	private int mFpsCounter = 0;
 	private long start = 0;
 	private long lastTime = 0;
 	private int mFramesTotal = 0;
 	private int mFPS = 15; //default is 15fps
 	
 	private boolean isRequest = false;
+	private ArrayList<String> mResultList = null;
 
 	private boolean mInTopHalf = false;
+
+	private info.guardianproject.iocipher.File fileOut;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
-		//button.setVisibility(View.GONE);
-		//buttonSelfie.setVisibility(View.GONE);
-		
 		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_VIDEO_CAPTURE);
+		mResultList = new ArrayList<String>();
+
+	}
+
+	@Override
+	public void onPause() {
+
+		super.onPause();
 
 	}
 
@@ -195,18 +206,23 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		
 	}
 	
+	
 	private void startRecording ()
 	{
 		mFrameQ = new ArrayDeque<VideoFrame>();
 		
 		mFramesTotal = 0;
-		frameCounter = 0;
+		mFpsCounter = 0;
 		
 		lastTime = System.currentTimeMillis();
 		
-		String fileName = "video" + new java.util.Date().getTime() + ".mov";
-		info.guardianproject.iocipher.File fileOut = new info.guardianproject.iocipher.File(mFileBasePath,fileName);
+		String fileName = "video" + new java.util.Date().getTime() + ".mp4";
+		fileOut = new info.guardianproject.iocipher.File(mFileBasePath,fileName);
 		
+		mResultList.add(fileOut.getAbsolutePath());
+		Intent intentResult = new Intent().putExtra(MediaStore.EXTRA_OUTPUT, mResultList.toArray(new String[mResultList.size()]));			
+		setResult(Activity.RESULT_OK, intentResult);
+
 		try {
 			mIsRecording = true;
 			
@@ -236,6 +252,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		progress.setText("[SAVING]");
 		h.sendEmptyMessageDelayed(1, 2000);
 		progress.setText("");
+		
 	}
 	
 	private void toggleCamera (boolean isSelfie)
@@ -253,6 +270,9 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	public void onPictureTaken(final byte[] data, Camera camera) {		
 		File fileSecurePicture;
 		try {
+
+			overlayView.setBackgroundResource(R.color.flash);
+			
 			long mTime = System.currentTimeMillis();
 			fileSecurePicture = new File(mFileBasePath,"secureselfie_" + mTime + ".jpg");
 
@@ -261,15 +281,19 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			out.flush();
 			out.close();
 
-			setResult(Activity.RESULT_OK, new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileSecurePicture.getAbsolutePath()));
+			mResultList.add(fileSecurePicture.getAbsolutePath());
+
+			Intent intentResult = new Intent().putExtra(MediaStore.EXTRA_OUTPUT, mResultList.toArray(new String[mResultList.size()]));			
+			setResult(Activity.RESULT_OK, intentResult);
 			
 			view.postDelayed(new Runnable()
 			{
 				@Override
 				public void run() {
+					overlayView.setBackgroundColor(Color.TRANSPARENT);
 					resumePreview();
 				}
-			},200);
+			},100);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -318,6 +342,19 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		    dataResult = out.toByteArray();
 		}   
 		
+		if (mFramesTotal == 0 && fileOut != null)
+		{
+			try {
+				info.guardianproject.iocipher.FileOutputStream fosThumb = new info.guardianproject.iocipher.FileOutputStream(new info.guardianproject.iocipher.File(fileOut.getAbsolutePath() + ".thumb.jpg"));
+				fosThumb.write(dataResult);
+				fosThumb.flush();
+				fosThumb.close();
+			
+			} catch (Exception e) {
+
+				Log.e("VideoCam","can't save thumb",e);
+			}
+		}
 		
 		if (mIsRecording && mFrameQ != null)
 			synchronized (mFrameQ)
@@ -337,10 +374,10 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				}
 			}
 			
-		frameCounter++;
+		mFpsCounter++;
         if((System.currentTimeMillis() - start) >= 1000) {
-        	mFPS = frameCounter;
-            frameCounter = 0; 
+        	mFPS = mFpsCounter;
+        	mFpsCounter = 0; 
             start = System.currentTimeMillis();
         }
 		
@@ -423,10 +460,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				
 				fos.close();
 				
-				setResult(Activity.RESULT_OK, new Intent().putExtra(MediaStore.EXTRA_OUTPUT, fileOut.getAbsolutePath()));
 				
-				if (isRequest)
-					finish();
 				
 			} catch (Exception e) {
 				Log.e(TAG, "IO", e);
@@ -464,6 +498,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 				
 				if (aac != null)
 					aac.stopRecording();
+				
 			}
 		}
 		
@@ -559,6 +594,15 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		 thread.start();
 
 	 }
+	 
+	  @Override
+	   public void onConfigurationChanged(Configuration newConfig) {
+		  
+		  	mIsRecording = false;
+		  	
+	        super.onConfigurationChanged(newConfig);
+
+	   }
 	 
 	 
 	

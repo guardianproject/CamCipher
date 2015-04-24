@@ -51,17 +51,20 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     private int dispWidth;
     private int dispHeight;
     private int displayMode;
-    
+    private Context context;
+    private SurfaceHolder holder;
     private int frameDelay = 0;
 
 	public class MjpegViewThread extends Thread {
+		
         private SurfaceHolder mSurfaceHolder;
         private int frameCounter = 0;
         private long start;
         private Bitmap ovl;
-
+        
         public MjpegViewThread(SurfaceHolder surfaceHolder, Context context) {
             mSurfaceHolder = surfaceHolder;
+            
         }
 
         private Rect destRect(int bmw, int bmh) {
@@ -125,6 +128,10 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
                 if(surfaceDone) {
                     try {
                         c = mSurfaceHolder.lockCanvas();
+                        
+                        if (c == null)
+                        	break;
+                        
                         synchronized (mSurfaceHolder) {
                             try {
                                 bm = mIn.readMjpegFrame();
@@ -169,9 +176,9 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     private void init(Context context) {
-        SurfaceHolder holder = getHolder();
+    	this.context = context;
+        holder = getHolder();
         holder.addCallback(this);
-        thread = new MjpegViewThread(holder, context);
         setFocusable(true);
         overlayPaint = new Paint();
         overlayPaint.setTextAlign(Paint.Align.LEFT);
@@ -187,11 +194,17 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void startPlayback() { 
         if(mIn != null) {
-            mRun = true;
+            mRun = true;          
+            thread = new MjpegViewThread(holder, context);
             thread.start();         
         }
     }
 
+    public boolean isPlaying ()
+    {
+    	return mRun;
+    }
+    
     public void stopPlayback() { 
         mRun = false;
         boolean retry = true;
