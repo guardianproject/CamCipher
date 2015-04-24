@@ -19,12 +19,13 @@ package info.guardianproject.iocipher.camera.io;
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.UUID;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -37,14 +38,27 @@ import android.webkit.MimeTypeMap;
 
 public class IOCipherContentProvider extends ContentProvider {
 	public static final String TAG = "IOCipherContentProvider";
-	public static final Uri FILES_URI = Uri
-			.parse("content://info.guardianproject.iocipher.camera/");
+	public static final String DEFAULT_AUTHORITY = "info.guardianproject.iocipher.camera";
 	private MimeTypeMap mimeTypeMap;
 
+	
+	private static HashMap<String,String> keyToPathMap = new HashMap<String,String>();
+	
 	@Override
 	public boolean onCreate() {
 		mimeTypeMap = MimeTypeMap.getSingleton();
 		return true;
+	}
+	
+	/*
+	 * Before something can be accessed by the content provider, it must be added to this map.
+	 * This protects from any app being able to query the IOCipher store at will
+	 */
+	public static String addShare (String path, String authority)
+	{
+		String uuid = UUID.randomUUID().toString().substring(0,8) + '-' + new File(path).getName();
+		keyToPathMap.put(uuid, path);
+		return "content://" + authority + '/' + uuid;
 	}
 
 	@Override
@@ -60,11 +74,15 @@ public class IOCipherContentProvider extends ContentProvider {
 		ParcelFileDescriptor[] pipe = null;
 		InputStream in = null;
 
-		String path = uri.getPath();
+		String pathKey = uri.getPath();
+		if (pathKey.startsWith("/"));
+			pathKey = pathKey.substring(1);
+			
+		String pathReal = keyToPathMap.get(pathKey);
 		
 		try {
-			File fileShare = new File(path);
-		//	Log.d(TAG,"found file: " + fileShare.getAbsolutePath() + " size=" + fileShare.length());
+			File fileShare = new File(pathReal);
+	
 			pipe = ParcelFileDescriptor.createPipe();			
 			in = new FileInputStream(fileShare);
 			new PipeFeederThread(in,
@@ -87,7 +105,7 @@ public class IOCipherContentProvider extends ContentProvider {
 	public Cursor query(Uri url, String[] projection, String selection,
 			String[] selectionArgs, String sort) {
 		
-		Log.d(TAG,"query called: " + url.toString());
+		//Log.d(TAG,"query called: " + url.toString());
 		
 		//throw new RuntimeException("Operation not supported");
 		return null;
@@ -133,7 +151,7 @@ public class IOCipherContentProvider extends ContentProvider {
 				{
 					out.write(buf, 0, len);
 					idx+=buf.length;
-					Log.d(TAG,"writing video at " + idx);
+				//	Log.d(TAG,"writing video at " + idx);
 				}
 				
 				in.close();
