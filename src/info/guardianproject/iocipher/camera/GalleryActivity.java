@@ -37,6 +37,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -84,7 +85,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	private Handler h = new Handler();//for UI event handling
 	
 	private boolean mUseBuiltInLockScreen = false;
-	
+	private boolean isExternalLaunch = false;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -125,6 +126,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			intentCapture.putExtra("basepath", "/");
 			intentCapture.putExtra("selfie", false);
 			startActivityForResult(intentCapture, REQUEST_TAKE_PICTURE);
+			isExternalLaunch = true;
 		}		
 		else if (MediaStore.ACTION_VIDEO_CAPTURE.equals(action)
 				|| ACTION_SECURE_SECURE_VIDEO_CAMERA.equals(action)
@@ -136,11 +138,23 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			intentCapture.putExtra("basepath", "/");
 			intentCapture.putExtra("selfie", false);
 			startActivityForResult(intentCapture, REQUEST_TAKE_VIDEO);
+			isExternalLaunch = true;
+			
 		}
+		
+		setIntent(null);
 		
 	}
 	
+	 
+	  @Override
+	   public void onConfigurationChanged(Configuration newConfig) {
+		  
+		  	
+	        super.onConfigurationChanged(newConfig);
 
+	   }
+	 
 	
 	protected void onResume() {
 		super.onResume();
@@ -174,7 +188,6 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-       
         if (requestCode == REQUEST_TAKE_PICTURE)
         {
         	 if (resultCode == RESULT_OK)
@@ -193,10 +206,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 					setResult(resultCode,data);	
 	        	}
              }
-        	 
-        	 finish();
         	
-			
         }
         else if (requestCode == REQUEST_TAKE_VIDEO)
         {
@@ -217,19 +227,20 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 	        	}
              }
         	 
-        	 finish();
         }
-	        
         
+        if (isExternalLaunch)
+        	finish();
+        else
+        	getFileList(root);
         
-        getFileList(root);
         
 	}
 
 	@Override
 	public void onCacheWordOpened() {
 
-        mCacheWord.setTimeout(-1);
+        mCacheWord.setTimeout(0);
 		//great!
         getFileList(root);
 	}
@@ -252,14 +263,15 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			Log.d(TAG,"error disconnecting from cacheword service",iae);
 		}
 		
-		if (mUseBuiltInLockScreen)
+		
+		if (mUseBuiltInLockScreen && (!isExternalLaunch))
 		{
 			Intent intent = new Intent(this,LockScreenActivity.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			startActivity(intent);
+			finish();
 		}
 		
-		finish();
 	}
 
 	@Override
@@ -324,6 +336,7 @@ public class GalleryActivity extends Activity  implements ICacheWordSubscriber {
 			return true;
 		}	
         
+		
         return false;
     }
 

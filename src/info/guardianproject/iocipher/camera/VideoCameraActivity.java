@@ -99,13 +99,6 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	}
 
 	@Override
-	public void onPause() {
-
-		super.onPause();
-
-	}
-
-	@Override
 	protected int getLayout()
 	{
 		return R.layout.base_camera;

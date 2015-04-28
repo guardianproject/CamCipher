@@ -340,7 +340,9 @@ public abstract class CameraBaseActivity extends Activity implements OnClickList
 		try {
 			
 			this.holder = holder;
-			camera.setPreviewDisplay(holder);
+			
+			if (camera != null)
+				camera.setPreviewDisplay(holder);
 			
 		} catch(IOException e) {
 			Log.e(LOG, e.toString());
