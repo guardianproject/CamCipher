@@ -55,6 +55,8 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder holder;
     private int frameDelay = 0;
 
+    private int lastW = -1, lastH = -1;
+    
 	public class MjpegViewThread extends Thread {
 		
         private SurfaceHolder mSurfaceHolder;
@@ -196,6 +198,11 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
         if(mIn != null) {
             mRun = true;          
             thread = new MjpegViewThread(holder, context);
+            if (lastW != -1)
+            {
+            	thread.setSurfaceSize(lastW, lastH);
+            }
+            
             thread.start();         
         }
     }
@@ -224,7 +231,11 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void surfaceChanged(SurfaceHolder holder, int f, int w, int h) { 
-        thread.setSurfaceSize(w, h); 
+    	if (thread != null)
+    		thread.setSurfaceSize(w, h);
+    	
+    	lastW = w;
+    	lastH = h;
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) { 
@@ -247,7 +258,6 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void setSource(MjpegInputStream source) { 
         mIn = source;
-        startPlayback();
     }
 
     public void setOverlayPaint(Paint p) { 

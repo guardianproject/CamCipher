@@ -14,6 +14,7 @@
 package info.guardianproject.iocipher.camera;
 
 import info.guardianproject.iocipher.File;
+import info.guardianproject.iocipher.FileInputStream;
 import info.guardianproject.iocipher.FileOutputStream;
 import info.guardianproject.iocipher.camera.encoders.AACHelper;
 import info.guardianproject.iocipher.camera.encoders.ImageToMJPEGMOVMuxer;
@@ -90,12 +91,13 @@ public class VideoCameraActivity extends CameraBaseActivity {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		
 		super.onCreate(savedInstanceState);
+		
 		mFileBasePath = getIntent().getStringExtra("basepath");
 		
 		isRequest = getIntent().getAction() != null && getIntent().getAction().equals(MediaStore.ACTION_VIDEO_CAPTURE);
 		mResultList = new ArrayList<String>();
-
 	}
 
 	@Override
@@ -224,7 +226,7 @@ public class VideoCameraActivity extends CameraBaseActivity {
 			else
 				initAudio(fileOut.getAbsolutePath()+".pcm");
 			
-			boolean withEmbeddedAudio = false;
+			boolean withEmbeddedAudio = true;
 			
 			Encoder encoder = new Encoder(fileOut,mFPS,withEmbeddedAudio);
 			encoder.start();
@@ -448,11 +450,22 @@ public class VideoCameraActivity extends CameraBaseActivity {
 					}
 
 				}
+				
+				//now write audio
+				
+            	FileInputStream fis = new FileInputStream(fileAudio);
+            	byte[] audioBuffer = new byte[1024*64];
+            	int bytesRead = -1;
+            	
+            	while ((bytesRead = fis.read(audioBuffer))!=-1)
+            	{
+            		muxer.addAudio(ByteBuffer.wrap(audioBuffer, 0, bytesRead));
+            	}
 
 				muxer.finish();
 				
+				fis.close();
 				fos.close();
-				
 				
 				
 			} catch (Exception e) {
@@ -563,7 +576,6 @@ public class VideoCameraActivity extends CameraBaseActivity {
 		                try {
 		                	outputStreamAudio.write(audioData,0,audioDataBytes);
 		                	
-		                	//muxer.addAudio(ByteBuffer.wrap(audioData, 0, audioData.length));
 		                } catch (IOException e) {
 		                    e.printStackTrace();
 		                }

@@ -52,7 +52,7 @@ public class IOCipherFileChannelWrapper implements SeekableByteChannel {
     }
 
     @Override
-    public int write(ByteBuffer arg0) throws IOException {
+    public synchronized int write(ByteBuffer arg0) throws IOException {
     	int size = arg0.remaining();
     	long newPos = position() + size;
         int result = ch.write(arg0, position());

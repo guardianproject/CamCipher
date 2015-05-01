@@ -6,7 +6,9 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Unit;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
@@ -58,10 +60,12 @@ public class ImageToMJPEGMOVMuxer {
 
         // Add video track to muxer
         videoTrack = muxer.addTrack(TrackType.VIDEO, framesPerSecond);
-    //    videoTrack.setTgtChunkDuration(new Rational(2, 1), Unit.SEC);
+        muxer.addTimecodeTrack(framesPerSecond);
+        videoTrack.setTgtChunkDuration(new Rational(2, 1), Unit.SEC);
         
        if (af != null)
         	audioTrack = muxer.addPCMAudioTrack(af);
+       
 
     }
 
