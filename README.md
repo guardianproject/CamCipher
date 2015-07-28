@@ -1,8 +1,8 @@
 
-IOCipher Camera Example
+Camera Cipher Library
 ================
 
-This is an example app for the IOCipher framework, which provides encrypted virtual disks for Android. 
+This is an library and example app for the IOCipher framework, which provides encrypted virtual disks for Android. 
 
 This example demonstrates how to capture a still photo (as an in memory byte[] array) directly from the Camera sensor, store that as an encrypted JPEG file directly inside of IOCipher, and then later share that file as a in-memory byte[] or a stream directly from a ContentProvider. It also handles recording video with audio in the same manner, using the MJPEG MP4 Format and Raw PCM audio.
 
